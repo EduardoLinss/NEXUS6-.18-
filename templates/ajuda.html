@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Como usar · NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.65 Arial, Helvetica, sans-serif; }
+  .pagina { max-width: 860px; margin: 0 auto; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 26px; }
+
+  h2 { font-size: 15px; margin: 34px 0 10px; padding-top: 14px;
+       border-top: 1px solid var(--linha); letter-spacing: .3px; }
+  h2 .num { color: var(--scania); margin-right: 8px; }
+  h3 { font-size: 13px; margin: 20px 0 6px; color: var(--texto-fraco);
+       font-weight: normal; letter-spacing: 1px; }
+  p { margin: 8px 0; }
+  ol, ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 5px 0; }
+  code { background: #0C1136; border: 1px solid var(--linha); border-radius: 4px;
+         padding: 1px 5px; font: 12px Consolas, monospace; }
+  b.campo { color: var(--texto); }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+  th { text-align: left; font-weight: normal; font-size: 10px; letter-spacing: 1px;
+       color: var(--texto-fraco); padding-bottom: 6px; }
+  td { padding: 7px 12px 7px 0; border-top: 1px solid var(--linha);
+       vertical-align: top; }
+
+  .nota { background: var(--cartao); border: 1px solid var(--linha);
+          border-left: 3px solid var(--scania); border-radius: 6px;
+          padding: 10px 14px; margin: 14px 0; font-size: 13px; }
+  .nota.atencao { border-left-color: var(--atencao); }
+  .nota b { letter-spacing: .3px; }
+
+  .indice { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 14px 18px; }
+  .indice ol { margin: 0; }
+
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    h1 { font-size: 19px; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    th { display: none; }
+    tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    td { border-top: 0; padding: 2px 0; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+<div class="pagina">
+
+<h1><img class="marca" src="{{ url_for('static', filename='nexus.svg') }}" alt="">COMO USAR O <span class="wm">NEXUS<span>-6</span></span></h1>
+<div class="sub"><a href="{{ url_for('menu') }}">← menu</a></div>
+
+<div class="indice">
+  <ol>
+    <li><a href="#dados">Carregar as planilhas</a></li>
+    <li><a href="#analise">Analisar o MIX</a></li>
+    <li><a href="#absenteismo">Absenteísmo</a></li>
+    <li><a href="#gargalos">Gargalos da sequência</a></li>
+    <li><a href="#tarefas">Cadastrar tarefas das variantes</a></li>
+    <li><a href="#regras">Criar regras de gargalo</a></li>
+    <li><a href="#exportar">Exportar, importar e PDF</a></li>
+    <li><a href="#filtro">Filtro MIX</a></li>
+    <li><a href="#mona">Cruzar com a MONA</a></li>
+    <li><a href="#painel">Painel da fábrica</a></li>
+    <li><a href="#setores">Setores</a></li>
+    <li><a href="#problemas">Se algo não funcionar</a></li>
+  </ol>
+</div>
+
+<h2 id="dados"><span class="num">1</span>Carregar as planilhas</h2>
+
+<p>Tudo começa na tela <b>Análise de MIX</b>. Duas formas de trazer os dados:</p>
+
+<h3>ENVIO MANUAL</h3>
+<p>No campo <b class="campo">Planilhas</b>, selecione <b>as duas de uma vez</b>
+(segure Ctrl ao clicar).</p>
+<p>A ordem em que você seleciona não importa: o sistema lê a data do nome do
+arquivo — <code>mix a partir do pop-id 775301 ( 10_09 )</code> — e coloca a
+mais antiga primeiro sozinho. Quando reordena, aparece um aviso amarelo com a
+sequência usada.</p>
+
+<div class="nota atencao">
+  <b>Se o nome não tiver a data entre parênteses</b>, o sistema mantém a ordem
+  em que você enviou e avisa. Nesse caso, selecione a mais antiga primeiro.
+</div>
+
+<h3>CAPTURA AUTOMÁTICA DO OUTLOOK</h3>
+<p>Botão <b>BAIXAR RECENTES</b> (últimos N dias) ou <b>BAIXAR POR PERÍODO</b>
+(entre duas datas). Ele procura na sua caixa de entrada os e-mails que batem
+com os filtros e baixa os anexos.</p>
+<p>O checkbox <b>buscar ao abrir a página</b> faz isso sozinho toda vez que
+você entra.</p>
+
+<div class="nota atencao">
+  <b>Só funciona rodando na sua máquina Windows</b>, com o Outlook instalado.
+  Acessando pelo servidor, essa seção não aparece — use o envio manual.
+</div>
+
+<p>Depois de carregada, a planilha fica guardada: você pode trocar de tela e
+voltar sem enviar de novo.</p>
+
+<h2 id="analise"><span class="num">2</span>Analisar o MIX</h2>
+
+<table>
+  <tr><th>Campo</th><th>O que é</th></tr>
+  <tr><td><b class="campo">POPID</b></td>
+      <td>O primeiro veículo do intervalo. A análise começa nele.</td></tr>
+  <tr><td><b class="campo">Produção do dia</b></td>
+      <td>Quantos veículos analisar a partir daquele POPID.</td></tr>
+  <tr><td><b class="campo">Absenteísmo</b></td>
+      <td>Quantas pessoas faltaram no setor. Ver a seção 3.</td></tr>
+  <tr><td><b class="campo">Início / Fim do turno</b></td>
+      <td>Só para o eixo de horas do PDF. Não afeta o cálculo de carga.</td></tr>
+</table>
+
+<p>Clique em <b>ANALISAR</b>. O resultado vem em colunas, uma por variante:</p>
+
+<ul>
+  <li>No topo, a <b>carga total</b> da variante — verde abaixo de 90%, âmbar
+      entre 90 e 100, vermelho acima.</li>
+  <li>Abaixo, cada tarefa com a porcentagem que ela representa e a quantidade
+      de veículos à direita.</li>
+  <li><b>Clique em qualquer número</b> de contagem para ver o POPID e a SEQ dos
+      veículos contados. Serve para conferir na planilha.</li>
+</ul>
+
+<p>Mais abaixo vêm os cartões do <b>CPM MIX</b> (as contagens do mix, incluindo
+as que vierem de um cruzamento com a MONA — ver a seção
+<a href="#mona">Cruzar com a MONA</a>) e o painel de gargalos.</p>
+
+<h2 id="absenteismo"><span class="num">3</span>Absenteísmo</h2>
+
+<p>É <b>um número só</b>: quantas pessoas faltaram no setor. As tarefas são
+redistribuídas entre quem sobrou.</p>
+
+<table>
+  <tr><th>Ausentes</th><th>O que acontece</th><th>Mensagem</th></tr>
+  <tr><td>0 ou 1</td><td>Distribuição normal, todas as variantes</td><td>—</td></tr>
+  <tr><td>2</td><td>Tarefas redistribuídas em 2 variantes</td>
+      <td><i>Necessário recurso</i>, se houver algum gargalo</td></tr>
+  <tr><td>3 ou mais</td><td>Tudo em 1 variante só</td>
+      <td><i>Linha descoberta para várias tarefas</i>; e
+          <i>Necessário recurso</i> se houver vários gargalos</td></tr>
+</table>
+
+<p>Quando há redistribuição, cada tarefa que veio de outra variante aparece com
+uma etiqueta pequena (<code>V3</code>) ao lado do nome, para você ver de onde
+ela saiu. A carga total do setor não muda — muda em quantas colunas ela está
+dividida.</p>
+
+<h2 id="gargalos"><span class="num">4</span>Gargalos da sequência</h2>
+
+<p>Gargalo é uma concentração de veículos difíceis próximos uns dos outros.
+O painel aparece na própria análise, e há também a tela
+<b>Gargalos da sequência</b> só com isso.</p>
+
+<ul>
+  <li>A <b>faixa</b> mostra um bloco por veículo, na ordem de produção —
+      vermelho é alta, âmbar é média.</li>
+  <li>A <b>tabela</b> traz a regra que disparou, as posições, o POPID/SEQ de
+      cada veículo envolvido e uma sugestão do que fazer.</li>
+</ul>
+
+<h2 id="tarefas"><span class="num">5</span>Cadastrar tarefas das variantes</h2>
+
+<p>Tela <b>Tarefas das variantes</b>. É aqui que se define o que entra no
+cálculo de carga.</p>
+
+<ol>
+  <li>Escolha a <b>variante</b> e dê um <b>nome</b> à tarefa.</li>
+  <li>Informe o <b>tempo em segundos</b> que ela leva por veículo.</li>
+  <li>Monte as <b>condições</b>: coluna, operador e valor. Até três, combinadas
+      com E — todas precisam ser verdadeiras.</li>
+</ol>
+
+<p>Com uma planilha carregada, o campo de coluna sugere as colunas reais e o de
+valor sugere os valores que aparecem nela. Sem planilha, digite o nome exato da
+coluna.</p>
+
+<h3>QUANDO A TAREFA DEPENDE DE VÁRIOS VEÍCULOS</h3>
+
+<p>Os campos <b class="campo">Mínimo de veículos</b> e
+<b class="campo">Dentro de uma janela de</b>:</p>
+
+<table>
+  <tr><th>Mínimo</th><th>Janela</th><th>Significa</th></tr>
+  <tr><td>vazio</td><td>—</td><td>Conta veículo a veículo (o normal)</td></tr>
+  <tr><td>3</td><td>vazio</td><td>3 veículos <b>colados</b> na sequência</td></tr>
+  <tr><td>3</td><td>6</td><td>3 veículos dentro de cada 6, mesmo espalhados</td></tr>
+</table>
+
+<p>O modo define o que contar: uma vez por grupo, todos os veículos do grupo, ou
+só o que passa do mínimo.</p>
+
+<p>Também dá para <b>criar variante</b> (V5, V6…). O campo de absenteísmo se
+ajusta sozinho.</p>
+
+<h2 id="regras"><span class="num">6</span>Criar regras de gargalo</h2>
+
+<p>Tela <b>Regras de gargalo</b>. Três tipos:</p>
+
+<table>
+  <tr><th>Tipo</th><th>Dispara quando</th></tr>
+  <tr><td>N em uma janela</td>
+      <td>Aparecem N carros que atendem às condições dentro de X carros</td></tr>
+  <tr><td>K consecutivos</td>
+      <td>K carros <b>colados</b> atendem às condições</td></tr>
+  <tr><td>Coocorrência</td>
+      <td>Dois grupos diferentes se encontram dentro de uma janela</td></tr>
+</table>
+
+<p>A severidade (ALTA ou MÉDIA) muda a cor na faixa e no relatório.</p>
+
+<h2 id="exportar"><span class="num">7</span>Exportar, importar e PDF</h2>
+
+<h3>RESULTADO</h3>
+<p>Abaixo das colunas, o bloco <b>EXPORTAR RESULTADO</b>, com duas abas:</p>
+<ul>
+  <li><b>Tabela (Excel)</b> — cole direto no Excel, cada campo cai numa célula.</li>
+  <li><b>Texto</b> — bloco pronto para e-mail, Teams ou WhatsApp.</li>
+</ul>
+<p>O botão <b>COPIAR</b> copia a aba que estiver aberta.</p>
+
+<h3>RELATÓRIO EM PDF</h3>
+<p>No mesmo bloco. Gera um arquivo com a carga por variante, as tarefas uma a
+uma, o CPM MIX, a linha do tempo do turno e os gargalos. Usa o mesmo POPID,
+produção e absenteísmo que estão na tela.</p>
+
+<h3>REGRAS E TAREFAS</h3>
+<p>As telas de tarefas e de regras têm <b>baixar .json</b> e
+<b>IMPORTAR .JSON</b>.</p>
+
+<div class="nota">
+  <b>Faça o download do .json de vez em quando.</b> É o backup completo do que
+  você cadastrou. Se alguém apagar algo por engano ou clicar em "restaurar
+  padrão", é só importar o arquivo de volta.
+</div>
+
+<p>O import confere o arquivo antes de gravar — se estiver quebrado, nada muda
+— e guarda uma cópia do que estava no ar antes de substituir.</p>
+
+<h2 id="filtro"><span class="num">8</span>Filtro MIX</h2>
+
+<p>Gera o Excel do MIX já formatado: mantém só as colunas úteis, aplica cores e
+larguras, remove linhas ocultas.</p>
+
+<ul>
+  <li><b>Automático</b> — baixa o último anexo do Outlook que bate com os
+      filtros e formata. Só na sua máquina Windows.</li>
+  <li><b>Manual</b> — envie um arquivo e ele formata. Funciona em qualquer
+      lugar.</li>
+</ul>
+
+<p>Em <b>Configurações de filtro</b> ficam o assunto, o remetente, os dias, as
+palavras-chave do anexo e a lista de <b>colunas a manter</b> — qualquer coluna
+fora dessa lista é descartada.</p>
+
+<p>Depois de processar, a tela mostra três listas: mantidas, descartadas e, em
+amarelo, as que estão na sua lista mas não existem na planilha. Essa terceira é
+o aviso de que a origem mudou um nome de coluna.</p>
+
+<p>O checkbox <b>Cruzar com MONA</b>, no envio manual e no automático, cruza a
+planilha carregada com uma segunda planilha da MONA por POPID — ver a seção
+<a href="#mona">Cruzar com a MONA</a>.</p>
+
+<div class="nota atencao">
+  <b>Compartilhado.</b> Tarefas, regras e configurações valem para todo mundo
+  que usa o sistema. O que uma pessoa edita, as outras veem na análise
+  seguinte.
+</div>
+
+<h2 id="mona"><span class="num">9</span>Cruzar com a MONA</h2>
+
+<p>Disponível tanto na <b>Análise de MIX</b> quanto no <b>Filtro MIX</b>
+(manual e automático). Marque o checkbox <b>Cruzar com MONA</b> para abrir o
+campo de envio de uma segunda planilha — a da MONA — que é cruzada com a
+planilha carregada pelo <b>POPID</b>.</p>
+
+<p>O texto encontrado entra junto da coluna <b class="campo">OPCIONAIS</b> (no
+Filtro MIX, função FA2) ou <b class="campo">Variantes</b> (FA1.2 e Análise),
+separado do que já havia ali por <code>|</code>.</p>
+
+<h3>DOIS FORMATOS DE PLANILHA MONA</h3>
+<p>O sistema reconhece sozinho qual dos dois a planilha enviada segue:</p>
+<ul>
+  <li><b>Formato técnico</b> — o mesmo da Função 4: POPID e colunas
+      <code>POS_10</code>, <code>POS_20</code>... com o nome do item na
+      segunda linha.</li>
+  <li><b>Lista simples</b> — só uma coluna POPID, sem os itens técnicos. Para
+      esse formato, é obrigatório informar o texto a escrever nos POPIDs
+      encontrados (ver abaixo).</li>
+</ul>
+
+<h3>VALORES FIXOS (FA2 e Análise)</h3>
+<p>No formato técnico, a maior parte das colunas já existe no mix geral da
+fábrica e por isso é ignorada automaticamente no cruzamento — só entram as
+variantes especiais que ainda não têm coluna lá:</p>
+
+<table>
+  <tr><th>Valor</th><th>Onde aparece</th></tr>
+  <tr><td><code>649|650</code></td><td>Já reconhecido sozinho, sem precisar
+      digitar nada. Conta automaticamente no CPM MIX.</td></tr>
+  <tr><td><code>658|660</code></td><td>Já reconhecido sozinho, sem precisar
+      digitar nada. Conta automaticamente no CPM MIX.</td></tr>
+  <tr><td>Cilindro elevado</td><td>Já reconhecido sozinho, sem precisar
+      digitar nada. Conta automaticamente no CPM MIX.</td></tr>
+</table>
+
+<p>Essa lista é cadastrada na tela <a href="{{ url_for('tags_mona_tela') }}">
+Tags da MONA</a> — dá para adicionar, remover ou restaurar o padrão sem
+precisar de código.</p>
+
+<h3>FA1.2: O INVERSO — TUDO ENTRA, MENOS O QUE JÁ EXISTE</h3>
+<p>A planilha MONA do FA1.2 tem itens diferentes da do FA2, e a maioria deles
+ainda não existe no mix geral — só <code>GÁS</code> e <code>6X6/4X4</code>
+já vêm de outra coluna. Por isso, no FA1.2 a lógica é a oposta da tabela
+acima: <b>todas</b> as colunas entram no cruzamento, <b>exceto</b> essas duas
+— cada uma mantendo o próprio texto (ex.: <code>8X2 EBS</code>,
+<code>ABS</code>, <code>SCR V8</code>), não um valor fixo combinado. Essa
+lista de exceção não tem tela própria; está em
+<code>ITENS_MONA_FA12_JA_NO_MIX</code>, em <code>mix_processor_1_2.py</code>.</p>
+
+<h3>UM VALOR FORA DA LISTA</h3>
+<p>Vale para o FA2 e a Análise (que usam a lista permitida). Na
+<b>Análise</b>, o campo é um menu: escolha uma das tags fixas ou
+<b>Outro</b>, que abre uma caixa de texto. No <b>Filtro MIX</b>, é direto uma
+caixa de texto (<b class="campo">Texto para POPIDs encontrados</b>).</p>
+<p>Esse texto avulso funciona nos dois formatos de planilha: numa lista
+simples, marca todo POPID que estiver nela; no formato técnico, também passa
+a valer como um item a mais — qualquer coluna cujo nome bata com o texto
+digitado entra no cruzamento, marcada com esse mesmo texto.</p>
+
+<div class="nota atencao">
+  <b>Sem planilha no formato técnico e sem texto informado</b>, o cruzamento
+  não tem o que procurar e a tela avisa pedindo o texto.
+</div>
+
+<h2 id="painel"><span class="num">10</span>Painel da fábrica</h2>
+
+<p>Mostra todos os setores cadastrados numa tela só: carga, gargalos e a curva
+de demanda geral — a partir das mesmas planilhas (Outlook ou envio manual)
+usadas na Análise de MIX.</p>
+
+<table>
+  <tr><th>Campo</th><th>O que é</th></tr>
+  <tr><td><b class="campo">POPID</b> (um por setor)</td>
+      <td>Setor sem POPID preenchido fica de fora do painel, sem virar
+          erro.</td></tr>
+  <tr><td><b class="campo">Produção do dia</b></td>
+      <td>Um valor geral, vale para todos os setores.</td></tr>
+  <tr><td><b class="campo">Turno</b> e <b class="campo">Takt</b></td>
+      <td>O takt cadastrado em cada setor vale para o 1º turno. Analisando o
+          2º turno, é obrigatório informar o takt aqui.</td></tr>
+</table>
+
+<p>O resultado traz a carga por setor em barras, um resumo consolidado, a
+curva de demanda geral e os momentos críticos do turno. O PDF do painel segue
+o mesmo princípio do relatório da Análise, só que para todos os setores de
+uma vez.</p>
+
+<h2 id="setores"><span class="num">11</span>Setores</h2>
+
+<p>Cadastro dos setores da fábrica: nome, takt, turno, pausas e postos. Cada
+setor tem <b>catálogo de variantes/tarefas e regras de gargalo próprios</b> —
+não compartilha com os outros setores.</p>
+
+<p>A lista de setores mostra quantas tarefas, variantes e regras cada um já
+tem cadastrado, para dar uma ideia do que falta configurar.</p>
+
+<h3>PADRÕES DA FÁBRICA</h3>
+<p>Um conjunto de valores (produção, takt, turno, pausas, postos) usado para
+pré-preencher um <b>setor novo</b>. Editar os padrões não muda os setores que
+já existem — só o que vem preenchido ao criar um a partir de agora.</p>
+
+<h2 id="problemas"><span class="num">12</span>Se algo não funcionar</h2>
+
+<table>
+  <tr><th>Sintoma</th><th>Causa provável</th></tr>
+  <tr><td><b class="campo">POPID não encontrado</b></td>
+      <td>O POPID não está nas planilhas carregadas — normalmente falta a
+          planilha do dia anterior.</td></tr>
+  <tr><td><b class="campo">Aviso amarelo sobre colunas</b></td>
+      <td>A planilha tem coluna repetida ou sem nome. O sistema renomeia e
+          segue, mas vale conferir o arquivo de origem.</td></tr>
+  <tr><td><b class="campo">Botão de PDF não aparece</b></td>
+      <td>Falta a biblioteca <code>reportlab</code> onde o sistema roda.</td></tr>
+  <tr><td><b class="campo">Captura do Outlook sumiu</b></td>
+      <td>Você não está na máquina que tem o Outlook. Use o envio manual.</td></tr>
+  <tr><td><b class="campo">Uma tarefa aparece com 0</b></td>
+      <td>Nenhum veículo bateu na condição. Clique no número de outra tarefa
+          parecida para ver quais veículos ela pegou e confira o cadastro.</td></tr>
+  <tr><td><b class="campo">Números diferentes dos de um colega</b></td>
+      <td>As planilhas são por navegador, mas o cadastro de tarefas é
+          compartilhado. Se alguém editou uma tarefa, todo mundo precisa
+          reanalisar.</td></tr>
+  <tr><td><b class="campo">As planilhas sumiram ao trocar de tela</b></td>
+      <td>Não deveria acontecer — elas ficam guardadas por navegador. Se o
+          navegador limpou os cookies, é só enviar de novo.</td></tr>
+  <tr><td><b class="campo">Cruzei com a MONA mas o valor não apareceu</b></td>
+      <td>Confira se o POPID que deveria bater está dentro do intervalo
+          POPID + Produção analisado. No formato técnico, confira também se
+          o nome da coluna da MONA bate com uma das tags fixas ou com o
+          texto que você digitou — colunas que já existem no mix geral são
+          ignoradas de propósito.</td></tr>
+</table>
+
+
+<p style="margin-top:30px">
+  <a href="{{ url_for('menu') }}">← voltar ao menu</a>
+</p>
+
+</div>
+</body>
+</html>

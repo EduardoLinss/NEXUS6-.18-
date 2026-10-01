@@ -1,0 +1,71 @@
+{
+  "config": {
+    "severidade_cores": { "ALTA": "vermelho", "MEDIA": "ambar" },
+    "_ajuda": {
+      "operadores": ["contem","nao_contem","igual","diferente","vazio","nao_vazio"],
+      "predicado": "{ logica: E|OU, condicoes: [ {coluna, operador, valor} ] }",
+      "tipos_padrao": {
+        "contagem_janela": "N ocorrencias do predicado dentro de uma janela de W posicoes -> min_ocorrencias/janela",
+        "sequencia_consecutiva": "K+ posicoes CONSECUTIVAS que batem o predicado -> min_seq",
+        "coocorrencia_janela": "dentro de W posicoes, TODOS os grupos presentes (>=1 unidade cada) -> grupos/janela"
+      },
+      "como_adicionar": "copie um bloco em regras_padrao, troque id/nome/tipo/params. regras_unidade e' opcional (complexidade por carro)."
+    }
+  },
+
+  "regras_unidade": [],
+
+  "regras_padrao": [
+    {
+      "id": "DOIS_8X_JANELA",
+      "nome": "Dois 8X4/8X2 em janela curta",
+      "tipo": "contagem_janela",
+      "severidade": "ALTA",
+      "janela": 4,
+      "min_ocorrencias": 2,
+      "predicado": {
+        "logica": "OU",
+        "condicoes": [
+          { "coluna": "MODELO", "operador": "contem", "valor": "8X4" },
+          { "coluna": "MODELO", "operador": "contem", "valor": "8X2" }
+        ]
+      }
+    },
+    {
+      "id": "RB_SEQ",
+      "nome": "3+ RB seguidos no RPX",
+      "tipo": "sequencia_consecutiva",
+      "severidade": "MEDIA",
+      "min_seq": 3,
+      "predicado": {
+        "logica": "E",
+        "condicoes": [
+          { "coluna": "RPX", "operador": "igual", "valor": "RB" }
+        ]
+      }
+    },
+    {
+      "id": "6X4_HD_BARRA_COM_8X4",
+      "nome": "6X4 (HD + barra tras.) junto de 8X4 em 3 carros",
+      "tipo": "coocorrencia_janela",
+      "severidade": "ALTA",
+      "janela": 3,
+      "grupos": [
+        {
+          "logica": "E",
+          "condicoes": [
+            { "coluna": "MODELO", "operador": "contem", "valor": "6X4" },
+            { "coluna": "OPCIONAIS", "operador": "contem", "valor": "HD" },
+            { "coluna": "BARRA TRASEIRA", "operador": "contem", "valor": "COM" }
+          ]
+        },
+        {
+          "logica": "E",
+          "condicoes": [
+            { "coluna": "MODELO", "operador": "contem", "valor": "8X4" }
+          ]
+        }
+      ]
+    }
+  ]
+}

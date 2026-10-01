@@ -1,0 +1,80 @@
+{#
+  Painel de gargalos. Usado na tela de análise (abaixo de EXPORTAR RESULTADO)
+  e na tela dedicada /gargalos.
+
+    {% with gargalos_dados=gargalos_dados, membros_de=membros_de %}
+      {% include '_gargalos.html' %}
+    {% endwith %}
+#}
+<div class="gargalos">
+  <div class="garg-topo">
+    <b>GARGALOS DA SEQUÊNCIA</b>
+    <span class="garg-resumo">
+      {% if gargalos_dados.resumo.total %}
+        <span class="pastilha alta">{{ gargalos_dados.resumo.alta }} alta</span>
+        <span class="pastilha media">{{ gargalos_dados.resumo.media }} média</span>
+        <span class="garg-fraco">
+          {{ gargalos_dados.resumo.unidades_afetadas }} de
+          {{ gargalos_dados.meta.n_unidades }} veículos afetados
+        </span>
+      {% else %}
+        <span class="pastilha limpo">nenhum gargalo no intervalo</span>
+      {% endif %}
+    </span>
+    <a class="garg-link" href="{{ url_for('gargalos_regras') }}">editar regras</a>
+  </div>
+
+  {# faixa andon: um bloco por veículo, na ordem de produção #}
+  <div class="faixa">
+    {% for unidade in gargalos_dados.unidades %}
+    <span class="bloco {{ unidade.heat|lower }}"
+          title="{{ unidade.popid }}{% if unidade.seq %} · {{ unidade.seq }}{% endif %} · {{ unidade.modelo }}{% if unidade.horario %} · {{ unidade.horario }}{% endif %}"></span>
+    {% endfor %}
+  </div>
+
+  {# régua: número da posição embaixo de cada bloco (1, 2, 3, 4...) #}
+  <div class="faixa-eixo faixa-eixo-numero">
+    {% for unidade in gargalos_dados.unidades %}
+    <span class="rotulo">{{ loop.index }}</span>
+    {% endfor %}
+  </div>
+
+  {# régua: horário estimado, so a cada poucas posições pra nao empilhar texto #}
+  {% set intervalo_horario = 5 %}
+  <div class="faixa-eixo faixa-eixo-horario">
+    {% for unidade in gargalos_dados.unidades %}
+    <span class="rotulo">
+      {%- if unidade.horario and (loop.index0 % intervalo_horario == 0 or loop.last) -%}
+        {{ unidade.horario }}
+      {%- endif -%}
+    </span>
+    {% endfor %}
+  </div>
+
+  {% if gargalos_dados.gargalos %}
+  <table class="garg-tab">
+    <tr>
+      <th>Severidade</th><th>Regra</th><th>Posições</th>
+      <th>Veículos</th><th>O que fazer</th>
+    </tr>
+    {% for gargalo in gargalos_dados.gargalos %}
+    <tr>
+      <td><span class="pastilha {{ gargalo.severidade|lower }}">
+        {{ gargalo.severidade }}</span></td>
+      <td>{{ gargalo.regra_nome }}</td>
+      <td class="mono">{{ gargalo.a + 1 }}–{{ gargalo.b + 1 }}</td>
+      <td class="mono garg-membros">
+        {% for membro in membros_de(gargalo) %}
+        <span title="{{ membro.modelo }}">{{ membro.popid }}{% if membro.seq %}<i>/{{ membro.seq }}</i>{% endif %}</span>
+        {% endfor %}
+      </td>
+      <td class="garg-fraco">{{ gargalo.detalhe }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="garg-fraco" style="padding:10px 0">
+    Nenhuma regra disparou neste intervalo de POPID.
+  </div>
+  {% endif %}
+</div>

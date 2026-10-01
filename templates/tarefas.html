@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXUS-6 · Tarefas por variante</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; background: var(--fundo); color: var(--texto);
+         font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: var(--texto-fraco); }
+  h1 { font-size: 20px; margin: 0 0 4px; } h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 20px; }
+
+  label { display: block; font-size: 12px; color: var(--texto-fraco); margin-bottom: 5px; }
+  input[type=text], input[type=number], select {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px;
+  }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 9px 20px; font-weight: bold; font-size: 13px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.leve { background: #1E3A8A; padding: 5px 12px; font-weight: normal; }
+  button.leve:hover { background: #1D4ED8; }
+  button.perigo { background: transparent; border: 1px solid var(--critico);
+                  color: var(--critico); padding: 5px 12px; font-weight: normal; }
+  button.perigo:hover { background: var(--critico); color: #fff; }
+
+  .erro { background: #4A1220; border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+
+  .editor { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 24px; }
+  .editor h2 { margin: 0 0 14px; font-size: 13px; letter-spacing: 1px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .linha { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end;
+           margin-bottom: 12px; }
+  .cond { display: grid; grid-template-columns: 1.4fr .9fr 1.4fr; gap: 10px;
+          margin-bottom: 8px; max-width: 760px; }
+  .cond select, .cond input { width: 100%; }
+  .dica { font-size: 12px; color: var(--texto-fraco); margin: 4px 0 14px; }
+
+  .grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+           gap: 14px; align-items: start; }
+  .variante { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; overflow: hidden; }
+  .variante header { background: var(--cartao-topo); border-top: 3px solid var(--scania);
+                     padding: 12px 14px; display: flex; justify-content: space-between;
+                     align-items: center; gap: 10px; }
+  .variante header .nome { font-size: 13px; font-weight: bold; }
+  .variante header .cod { font-size: 11px; color: var(--texto-fraco); }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 9px 14px; border-top: 1px solid var(--linha); vertical-align: top; }
+  td.acoes { text-align: right; white-space: nowrap; width: 1%; }
+  .tempo { color: var(--atencao); font-size: 12px; }
+  .regra { color: var(--texto-fraco); font-size: 12px; }
+  .vazio { color: var(--texto-fraco); font-size: 12px; padding: 14px; }
+  form.inline { display: inline; }
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin-bottom: 16px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+
+  .importar { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 14px; }
+  .importar b { font-size: 12px; letter-spacing: 1px; }
+  .importar .linha-imp { display: flex; flex-wrap: wrap; gap: 12px;
+                         align-items: center; margin-top: 10px; }
+  .importar input[type=file] { background: #0C1136; color: var(--texto);
+                               border: 1px solid var(--linha); border-radius: 6px;
+                               padding: 6px; font-size: 13px; width: 320px; }
+  .importar .dica-imp { font-size: 11px; color: var(--texto-fraco);
+                        margin-top: 8px; }
+  @media (max-width: 700px) {
+    .importar input[type=file] { width: 100%; }
+    .importar .linha-imp > * { flex: 1 1 100%; }
+  }
+
+  .selo-seq { display: inline-block; margin-top: 5px; padding: 2px 8px;
+              border: 1px solid var(--scania); border-radius: 10px;
+              color: #FF9AA0; font-size: 11px; }
+
+  /* ---- bloco de exportação ---- */
+  .exportar { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 22px; }
+  .exp-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+              margin-bottom: 10px; }
+  .exp-topo b { font-size: 12px; letter-spacing: 1px; }
+  .exp-abas { display: flex; gap: 4px; }
+  .exp-acoes { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  button.aba { background: transparent; color: var(--texto-fraco);
+               border: 1px solid var(--linha); border-radius: 6px;
+               padding: 5px 12px; font-size: 12px; font-weight: normal; }
+  button.aba.ativa { background: var(--linha); color: var(--texto); }
+  button.copiar { background: #2E8B57; padding: 7px 18px; font-size: 12px; }
+  button.copiar:hover { background: #228B22; }
+  a.baixar { color: var(--texto-fraco); font-size: 12px; text-decoration: none;
+             border: 1px solid var(--linha); border-radius: 6px; padding: 6px 12px; }
+  a.baixar:hover { color: var(--texto); border-color: var(--texto-fraco); }
+  .exportar textarea { width: 100%; height: 190px; resize: vertical;
+                       background: #0C1136; color: var(--texto);
+                       border: 1px solid var(--linha); border-radius: 6px;
+                       padding: 10px; font: 12px/1.45 Consolas, monospace;
+                       white-space: pre; }
+  .exp-dica { font-size: 11px; color: var(--texto-fraco); margin-top: 6px; }
+
+  .rodape { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--linha);
+            display: flex; gap: 30px; flex-wrap: wrap; align-items: flex-end; }
+
+  /* ---------- celular ---------- */
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    h1 { font-size: 18px; }
+
+    /* 16px evita o zoom automatico do iOS ao focar um campo */
+    input[type=text], input[type=number], input[type=file],
+    input[type=date], select, textarea {
+      width: 100%; font-size: 16px;
+    }
+    .linha > div, .campos > div { flex: 1 1 100%; min-width: 0; }
+    .linha, .campos { gap: 12px; }
+
+    /* alvo de toque confortavel */
+    .linha > button, .campos > button, form > button { width: 100%; }
+    button { min-height: 44px; }
+  }
+
+  @media (max-width: 700px) {
+    .grade { grid-template-columns: 1fr; }
+    .cond { grid-template-columns: 1fr; gap: 8px; }
+    .editor { padding: 14px; }
+    .exp-acoes { margin-left: 0; width: 100%; }
+    .exp-acoes button, .exp-acoes a { flex: 1 1 auto; text-align: center; }
+    button.aba, button.copiar { min-height: 38px; }
+    .exportar textarea { height: 150px; }
+
+    /* a tabela de tarefas vira lista: rotulo em cima, acoes embaixo */
+    table, tbody, tr, td { display: block; width: 100%; }
+    td { border-top: 0; padding: 4px 14px; }
+    tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    td.acoes { text-align: left; width: auto; white-space: normal;
+               padding-top: 8px; }
+    td.acoes button { min-height: 36px; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1><img class="marca" src="{{ url_for('static', filename='nexus.svg') }}" alt=""><span class="wm">NEXUS<span>-6</span></span> · Tarefas por variante</h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  <a href="{{ url_for('analise') }}">análise</a> ·
+  as alterações valem imediatamente para a próxima análise
+</div>
+
+<div class="barra-setor">
+  <span class="rot">SETOR</span>
+  {% for s in setores %}
+  <a href="{{ url_for(request.endpoint, setor=s.id) }}"
+     class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+  {% endfor %}
+  <a href="{{ url_for('tela_setores') }}" title="Cadastrar setores">+</a>
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+
+<!-- ------------------- editor ------------------- -->
+<form method="post" class="editor" action="{{ url_for('tarefas') }}">
+  <h2>{{ 'EDITAR TAREFA' if editando.id else 'NOVA TAREFA' }}</h2>
+  <input type="hidden" name="acao" value="salvar_tarefa">
+  <input type="hidden" name="tarefa_id" value="{{ editando.id }}">
+  <input type="hidden" name="token" value="{{ token }}">
+
+  <div class="linha">
+    <div style="flex:2 1 260px">
+      <label>Nome da tarefa</label>
+      <input type="text" name="nome" value="{{ editando.nome }}"
+             style="width:100%" placeholder="ex.: Suporte do estepe" required>
+    </div>
+    <div>
+      <label>Variante</label>
+      <select name="variante">
+        {% for v in variantes %}
+        <option value="{{ v.id }}" {{ 'selected' if v.id == editando.variante }}>
+          {{ v.id }} · {{ v.nome }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Tempo (segundos)</label>
+      <input type="text" name="tempo" value="{{ editando.tempo }}"
+             style="width:120px" placeholder="145" required>
+    </div>
+  </div>
+
+  <label>Condições — o veículo entra na conta quando <b>todas</b> valerem</label>
+  <datalist id="lista_colunas">
+    {% for coluna in colunas.keys() %}<option value="{{ coluna }}">{% endfor %}
+  </datalist>
+
+  {% for i in range(1, max_condicoes + 1) %}
+    {% set cond = editando.condicoes[i-1] %}
+    <div class="cond">
+      <!-- input + datalist: dá para escolher da planilha carregada
+           ou digitar o nome da coluna quando não há planilha -->
+      <input type="text" name="coluna_{{ i }}" value="{{ cond.coluna }}"
+             list="lista_colunas" placeholder="coluna"
+             data-indice="{{ i }}">
+      <select name="operador_{{ i }}">
+        {% for chave, rotulo in operadores.items() %}
+        <option value="{{ chave }}" {{ 'selected' if chave == cond.operador }}>{{ rotulo }}</option>
+        {% endfor %}
+      </select>
+      <input type="text" name="valor_{{ i }}" value="{{ cond.valor }}"
+             list="valores_{{ i }}" placeholder="ex.: 8X4">
+      <datalist id="valores_{{ i }}"></datalist>
+    </div>
+  {% endfor %}
+
+  {% set seq = editando.sequencia %}
+  <div class="linha" style="margin-top:14px">
+    <div>
+      <label>Mínimo de veículos</label>
+      <input type="number" name="sequencia_min" min="2" max="50"
+             value="{{ seq.minimo if seq else '' }}" style="width:110px"
+             placeholder="vazio = sem grupo">
+    </div>
+    <div>
+      <label>Dentro de uma janela de</label>
+      <input type="number" name="sequencia_janela" min="2" max="200"
+             value="{{ seq.janela if seq and seq.janela else '' }}"
+             style="width:130px" placeholder="vazio = colados">
+    </div>
+    <div style="flex:1 1 320px">
+      <label>Quando a sequência acontece</label>
+      <select name="sequencia_modo" style="width:100%">
+        {% for chave, rotulo in modos_sequencia.items() %}
+        <option value="{{ chave }}"
+                {{ 'selected' if seq and chave == seq.modo }}>{{ rotulo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="dica">
+    Mínimo vazio = a tarefa conta veículo a veículo, como sempre.<br>
+    Mínimo <b>3</b> e janela <b>vazia</b>: 3 veículos <b>colados</b>.<br>
+    Mínimo <b>3</b> e janela <b>6</b>: 3 veículos dentro de cada 6, mesmo
+    espalhados. Ao disparar, os veículos são consumidos e a contagem recomeça
+    depois do gatilho.
+  </div>
+
+  <div class="dica">
+    {% if planilha_carregada %}
+      Colunas e valores vêm da planilha carregada agora — mais as colunas
+      padrão da função, mesmo as que não estão nessa planilha.
+    {% else %}
+      Escolha entre as colunas padrão da função no campo abaixo, ou digite
+      outro nome de coluna.
+      <a href="{{ url_for('analise') }}">Carregue os dados</a> para também
+      sugerir os valores mais comuns de cada uma.
+    {% endif %}
+  </div>
+
+  <button type="submit">{{ 'SALVAR ALTERAÇÕES' if editando.id else 'ADICIONAR TAREFA' }}</button>
+  {% if editando.id %}
+  <a href="{{ url_for('tarefas', token=token) }}" style="margin-left:14px">cancelar</a>
+  {% endif %}
+</form>
+
+<!-- ------------------- catálogo ------------------- -->
+<div class="grade">
+  {% for variante in variantes %}
+  <section class="variante">
+    <header>
+      <div>
+        <div class="nome">{{ variante.nome }}</div>
+        <div class="cod">{{ variante.id }} · {{ variante.tarefas|length }} tarefa(s)</div>
+      </div>
+      <div>
+        <a href="{{ url_for('tarefas', nova=variante.id, token=token) }}">
+          <button type="button" class="leve">+ tarefa</button>
+        </a>
+        <form method="post" class="inline"
+              onsubmit="return confirm('Excluir a variante {{ variante.id }} e todas as suas tarefas?')">
+          <input type="hidden" name="acao" value="remover_variante">
+          <input type="hidden" name="variante_id" value="{{ variante.id }}">
+          <input type="hidden" name="token" value="{{ token }}">
+          <button type="submit" class="perigo">excluir</button>
+        </form>
+      </div>
+    </header>
+
+    {% if variante.tarefas %}
+    <table>
+      {% for tarefa in variante.tarefas %}
+      <tr>
+        <td>
+          <div>{{ tarefa.nome }}</div>
+          <div class="tempo">{{ '%g'|format(tarefa.tempo) }} s</div>
+          <div class="regra">
+            {% for cond in condicoes_de_criterio(tarefa.criterio) %}
+              {{ cond.coluna }} {{ operadores[cond.operador] }} <b>{{ cond.valor }}</b>
+              {%- if not loop.last %} <span style="color:var(--scania)">e</span> {% endif %}
+            {% endfor %}
+            {% set seq = sequencia_de_criterio(tarefa.criterio) %}
+            {% if seq %}
+            <div class="selo-seq">
+              {% if seq.janela %}{{ seq.minimo }} em cada {{ seq.janela }}
+              {%- else %}{{ seq.minimo }}+ seguidos{% endif %}
+              · {{ modos_sequencia[seq.modo] }}
+            </div>
+            {% endif %}
+          </div>
+        </td>
+        <td class="acoes">
+          <a href="{{ url_for('tarefas', editar=tarefa.id, token=token) }}">
+            <button type="button" class="leve">editar</button>
+          </a><br>
+          <form method="post" class="inline"
+                onsubmit="return confirm('Excluir a tarefa {{ tarefa.nome }}?')">
+            <input type="hidden" name="acao" value="remover_tarefa">
+            <input type="hidden" name="tarefa_id" value="{{ tarefa.id }}">
+            <input type="hidden" name="token" value="{{ token }}">
+            <button type="submit" class="perigo" style="margin-top:6px">excluir</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% else %}
+    <div class="vazio">Nenhuma tarefa nesta variante.</div>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+
+<!-- ------------------- rodapé ------------------- -->
+<div class="rodape">
+  <form method="post">
+    <input type="hidden" name="acao" value="nova_variante">
+    <input type="hidden" name="token" value="{{ token }}">
+    <div class="linha" style="margin:0">
+      <div>
+        <label>Código</label>
+        <input type="text" name="variante_id" placeholder="V5" style="width:80px">
+      </div>
+      <div>
+        <label>Nome da variante</label>
+        <input type="text" name="variante_nome" placeholder="Variante 5">
+      </div>
+      <button type="submit" class="leve" style="padding:9px 16px">CRIAR VARIANTE</button>
+    </div>
+  </form>
+
+  <form method="post"
+        onsubmit="return confirm('Descartar todas as alterações e voltar ao catálogo original?')">
+    <input type="hidden" name="acao" value="restaurar">
+    <input type="hidden" name="token" value="{{ token }}">
+    <button type="submit" class="perigo" style="padding:9px 16px">RESTAURAR PADRÃO</button>
+  </form>
+</div>
+
+
+<form method="post" enctype="multipart/form-data" class="importar"
+      onsubmit="return confirm('Isso substitui tudo o que está salvo agora. Uma cópia do atual será guardada. Continuar?')">
+  <input type="hidden" name="acao" value="importar">
+  <input type="hidden" name="token" value="{{ token }}">
+  <b>IMPORTAR</b>
+  <div class="linha-imp">
+    <input type="file" name="arquivo" accept=".json,application/json" required>
+    <button type="submit" class="leve" style="padding:9px 16px">IMPORTAR .JSON</button>
+  </div>
+  <div class="dica-imp">
+    Use o <b>.json</b> — o .tsv é só para abrir no Excel e não pode ser
+    reimportado. O conteúdo é
+    conferido antes de gravar — se estiver quebrado, nada muda. Uma cópia do
+    que está no ar é guardada automaticamente na pasta de dados.
+  </div>
+</form>
+
+{% with id='regras', titulo='EXPORTAR REGRAS SALVAS',
+        tsv=export_regras_tsv, texto=export_regras_texto,
+        downloads=[('baixar .json', url_for('exportar_regras', formato='json', setor=setor.id)),
+                   ('baixar .tsv', url_for('exportar_regras', formato='tsv', setor=setor.id))] %}
+  {% include '_exportar.html' %}
+{% endwith %}
+
+<!-- Os valores por coluna viajam como JSON, nao como codigo. Assim nao ha
+     Jinja dentro do <script>, que era o que fazia o editor acusar erro de
+     JavaScript em algo que o navegador nunca chega a ver. -->
+<script id="dados-colunas" type="application/json">{{ colunas|tojson }}</script>
+
+<script>
+  var VALORES = JSON.parse(
+    document.getElementById("dados-colunas").textContent || "{}"
+  );
+
+  function trocarColuna(campo) {
+    var indice = campo.getAttribute("data-indice");
+    var lista = document.getElementById("valores_" + indice);
+    if (!lista) { return; }
+    lista.innerHTML = "";
+    (VALORES[campo.value] || []).forEach(function (valor) {
+      var opcao = document.createElement("option");
+      opcao.value = valor;
+      lista.appendChild(opcao);
+    });
+  }
+
+  document.querySelectorAll(".cond input[name^='coluna_']").forEach(function (campo) {
+    campo.addEventListener("input", function () { trocarColuna(campo); });
+    trocarColuna(campo);   // sugestões das condições já preenchidas
+  });
+</script>
+
+</body>
+</html>

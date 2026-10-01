@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setores · NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px 60px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  input[type=text], input[type=number], input[type=time], textarea {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  textarea { font: 13px/1.5 Consolas, monospace; resize: vertical; }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.leve { background: #1E3A8A; padding: 6px 14px; font-weight: normal;
+                font-size: 13px; }
+  button.perigo { background: transparent; border: 1px solid var(--critico);
+                  color: var(--critico); padding: 6px 14px; font-weight: normal;
+                  font-size: 13px; }
+  button.perigo:hover { background: var(--critico); color: #fff; }
+  form.inline { display: inline; }
+
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .campos { display: grid; gap: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .largo { grid-column: 1 / -1; }
+  .dica { font-size: 11px; color: var(--texto-fraco); margin-top: 5px; }
+
+  .erro { background: #4A1220; border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+
+  .grade { display: grid; gap: 12px;
+           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .setor { background: var(--cartao); border: 1px solid var(--linha);
+           border-radius: 10px; padding: 14px 16px; }
+  .setor.ativo { border-color: var(--scania); }
+  .setor .nome { font-size: 15px; }
+  .setor .cod { font-size: 11px; color: var(--texto-fraco);
+                font-family: Consolas, monospace; }
+  .setor dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px;
+              margin: 10px 0 0; font-size: 12px; }
+  .setor dt { color: var(--texto-fraco); }
+  .setor dd { margin: 0; }
+  .setor .acoes { margin-top: 12px; display: flex; gap: 8px; }
+
+  .cabecalho { display: flex; gap: 16px; align-items: flex-start;
+               margin-bottom: 22px; }
+  .cabecalho > div:first-child { flex: 1 1 auto; }
+  .engrenagem { display: flex; align-items: center; gap: 8px;
+                background: transparent; border: 1px solid var(--linha);
+                color: var(--texto-fraco); border-radius: 8px;
+                padding: 9px 16px; font-size: 12px; font-weight: bold;
+                letter-spacing: 1px; }
+  .engrenagem:hover { border-color: var(--scania); color: var(--texto);
+                      background: transparent; }
+
+  .dialogo { background: var(--cartao); color: var(--texto);
+             border: 1px solid var(--scania); border-radius: 12px;
+             padding: 20px 22px; width: min(720px, 94vw); }
+  .dialogo::backdrop { background: rgba(6, 10, 34, .7); }
+  .dialogo-topo { display: flex; align-items: center; gap: 12px;
+                  margin-bottom: 10px; }
+  .dialogo-topo b { font-size: 12px; letter-spacing: 1px; }
+  .fechar { margin-left: auto; background: transparent; border: 0;
+            color: var(--texto-fraco); font-size: 18px; padding: 0 4px; }
+  .fechar:hover { background: transparent; color: var(--texto); }
+
+  @media (max-width: 700px) {
+    body { padding: 16px 14px 40px; }
+    .campos { grid-template-columns: 1fr; }
+    .grade { grid-template-columns: 1fr; }
+    button { min-height: 44px; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<div class="cabecalho">
+  <div>
+    <h1>SETORES</h1>
+    <div class="sub" style="margin:0">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  cada setor tem takt, turno, postos e o seu próprio catálogo de tarefas e
+  regras de gargalo
+    </div>
+  </div>
+  <button type="button" class="engrenagem" onclick="abrirPadroes()"
+          title="Padrões da fábrica">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+         stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+      <circle cx="12" cy="12" r="3.2"/>
+      <path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/>
+    </svg>
+    PADRÕES
+  </button>
+</div>
+
+<dialog id="dialogo-padroes" class="dialogo">
+  <form method="post">
+    <input type="hidden" name="acao" value="salvar_padroes">
+    <div class="dialogo-topo">
+      <b>PADRÕES DA FÁBRICA</b>
+      <button type="button" class="fechar" onclick="fecharPadroes()">✕</button>
+    </div>
+    <div class="dica" style="margin-bottom:14px">
+      Valem para a fábrica toda e preenchem o formulário de um setor novo.
+      Alterar aqui <b>não</b> muda os setores já cadastrados — cada um mantém o
+      que foi salvo nele.
+    </div>
+
+    <div class="campos">
+      <div>
+        <label>Produção padrão do dia</label>
+        <input type="text" name="producao" value="{{ padroes.producao }}">
+        <div class="dica">Valor inicial no painel da fábrica.</div>
+      </div>
+      <div>
+        <label>Takt padrão (s/veículo)</label>
+        <input type="number" name="takt_segundos" step="1" min="1"
+               value="{{ padroes.takt_segundos|int }}">
+      </div>
+      <div>
+        <label>Postos padrão</label>
+        <input type="number" name="postos" min="1" max="20"
+               value="{{ padroes.postos }}">
+      </div>
+      <div>
+        <label>Início do turno</label>
+        <input type="time" name="inicio_turno" value="{{ padroes.inicio_turno }}">
+      </div>
+      <div>
+        <label>Fim do turno</label>
+        <input type="time" name="fim_turno" value="{{ padroes.fim_turno }}">
+      </div>
+      <div>
+        <label>“Vários gargalos” a partir de</label>
+        <input type="number" name="gargalos_varios" min="1" max="50"
+               value="{{ padroes.gargalos_varios }}">
+      </div>
+      <div>
+        <label>Pausas padrão — uma por linha</label>
+        <textarea name="pausas" rows="4">{{ padroes_pausas }}</textarea>
+      </div>
+      <div>
+        <label>Absenteísmo padrão — faltas=postos</label>
+        <textarea name="postos_por_faltas" rows="4">{{ padroes_tabela }}</textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:16px; display:flex; gap:12px">
+      <button type="submit">SALVAR PADRÕES</button>
+      <button type="button" class="leve" onclick="fecharPadroes()">cancelar</button>
+    </div>
+  </form>
+</dialog>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+
+<form method="post" class="painel">
+  <h2>{{ 'EDITANDO: ' ~ editando.nome if editando.id else 'NOVO SETOR' }}</h2>
+  <input type="hidden" name="acao" value="salvar">
+  <input type="hidden" name="setor_id" value="{{ editando.id }}">
+
+  <div class="campos">
+    <div>
+      <label>Nome</label>
+      <input type="text" name="nome" value="{{ editando.nome }}"
+             placeholder="Ex.: FA1.2">
+    </div>
+    <div>
+      <label>Identificador</label>
+      <input type="text" name="id" value="{{ editando.id }}"
+             placeholder="Ex.: fa12" {{ 'readonly' if editando.id }}>
+      <div class="dica">Usado na URL e na pasta de dados. Não muda depois.</div>
+    </div>
+    <div class="largo">
+      <label>Descrição</label>
+      <input type="text" name="descricao" value="{{ editando.descricao }}">
+    </div>
+
+    <div>
+      <label>Takt (segundos por veículo)</label>
+      <input type="number" name="takt_segundos" step="1" min="1"
+             value="{{ editando.takt_segundos|int }}">
+      <div class="dica">Base do cálculo de carga.</div>
+    </div>
+    <div>
+      <label>Postos / variantes</label>
+      <input type="number" name="postos" min="1" max="20"
+             value="{{ editando.postos }}">
+      <div class="dica">Quem manda no cálculo são as variantes do catálogo
+        deste setor; este número serve de referência.</div>
+    </div>
+    <div>
+      <label>Início do turno</label>
+      <input type="time" name="inicio_turno" value="{{ editando.inicio_turno }}">
+    </div>
+    <div>
+      <label>Fim do turno</label>
+      <input type="time" name="fim_turno" value="{{ editando.fim_turno }}">
+    </div>
+
+    <div>
+      <label>Pausas — uma por linha</label>
+      <textarea name="pausas" rows="4"
+                placeholder="09:00-09:04">{{ pausas_texto }}</textarea>
+      <div class="dica">Descontadas do relógio na linha do tempo.</div>
+    </div>
+    <div>
+      <label>Absenteísmo — faltas=postos</label>
+      <textarea name="postos_por_faltas" rows="4"
+                placeholder="0=todos&#10;1=todos&#10;2=2">{{ tabela_texto }}</textarea>
+      <div class="dica">Faltas não listadas deixam 1 posto ativo.</div>
+    </div>
+    <div>
+      <label>“Vários gargalos” a partir de</label>
+      <input type="number" name="gargalos_varios" min="1" max="50"
+             value="{{ editando.gargalos_varios }}">
+    </div>
+  </div>
+
+  <div style="margin-top:16px">
+    <button type="submit">{{ 'SALVAR' if editando.id else 'CRIAR SETOR' }}</button>
+    {% if editando.id %}
+    <a href="{{ url_for('tela_setores') }}" style="margin-left:14px">cancelar</a>
+    {% endif %}
+  </div>
+</form>
+
+<h2 style="font-size:12px; letter-spacing:1px; color:var(--texto-fraco);
+           font-weight:normal">SETORES CADASTRADOS ({{ setores|length }})</h2>
+
+<div class="grade">
+  {% for s in setores %}
+  <div class="setor {{ 'ativo' if s.id == setor.id }}">
+    <div class="nome">{{ s.nome }}</div>
+    <div class="cod">{{ s.id }}</div>
+    {% if s.descricao %}<div class="dica">{{ s.descricao }}</div>{% endif %}
+    <dl>
+      <dt>Takt</dt><dd>{{ s.takt_segundos|int }} s</dd>
+      <dt>Turno</dt><dd>{{ s.inicio_turno }}–{{ s.fim_turno }}</dd>
+      <dt>Pausas</dt><dd>{{ s.pausas|length }}</dd>
+      <dt>Postos</dt><dd>{{ s.postos }}</dd>
+      <dt>Variantes</dt>
+      <dd{% if contagens[s.id].variantes != s.postos %} style="color:var(--atencao)"
+          title="O cálculo usa as variantes do catálogo, não este número"{% endif %}>
+        {{ contagens[s.id].variantes }}</dd>
+      <dt>Tarefas</dt><dd>{{ contagens[s.id].tarefas }}</dd>
+      <dt>Regras</dt><dd>{{ contagens[s.id].regras }}</dd>
+    </dl>
+    <div class="acoes">
+      <a href="{{ url_for('tela_setores', editar=s.id) }}">
+        <button type="button" class="leve">editar</button>
+      </a>
+      <a href="{{ url_for('analise', setor=s.id) }}">
+        <button type="button" class="leve">abrir</button>
+      </a>
+      {% if setores|length > 1 %}
+      <form method="post" class="inline"
+            onsubmit="return confirm('Remover o setor {{ s.nome }}? O catálogo e as regras dele ficam no disco, mas o setor some do menu.')">
+        <input type="hidden" name="acao" value="remover">
+        <input type="hidden" name="setor_id" value="{{ s.id }}">
+        <button type="submit" class="perigo">remover</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  var dialogo = document.getElementById("dialogo-padroes");
+
+  function abrirPadroes() {
+    // <dialog> nativo quando existe; senao o elemento aparece como bloco.
+    if (dialogo.showModal) { dialogo.showModal(); }
+    else { dialogo.setAttribute("open", "open"); }
+  }
+
+  function fecharPadroes() {
+    if (dialogo.close) { dialogo.close(); }
+    else { dialogo.removeAttribute("open"); }
+  }
+</script>
+
+</body>
+</html>

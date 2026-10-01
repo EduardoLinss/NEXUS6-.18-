@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da fábrica · NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px 60px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 20px; }
+
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 4px; }
+  select { background: #0C1136; color: var(--texto);
+           border: 1px solid var(--linha); border-radius: 6px;
+           padding: 8px 10px; font-size: 14px; width: 100%; }
+  input[type=text], input[type=file] {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%;
+  }
+  input[type=file] { padding: 6px; }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.sec { background: #2E8B57; }
+  button.sec:hover { background: #228B22; }
+
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+
+  .erro { background: #4A1220; border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .aviso-box { background: #3D3211; border: 1px solid var(--atencao);
+               color: #F7E7BB; padding: 10px 14px; border-radius: 6px;
+               margin-bottom: 14px; font-size: 13px; }
+
+  /* ---- números da fábrica ---- */
+  .numeros { display: grid; gap: 12px; margin-bottom: 18px;
+             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .numero { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 14px 16px; }
+  .numero .rot { font-size: 11px; color: var(--texto-fraco);
+                 letter-spacing: 1px; }
+  .numero .val { font-size: 27px; font-weight: bold; line-height: 1.25; }
+  .numero .obs { font-size: 11px; color: var(--texto-fraco); }
+  .ok { color: var(--ok); } .atencao { color: var(--atencao); }
+  .critico { color: var(--critico); }
+
+  .globais { display: grid; gap: 14px; align-items: end;
+             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+
+  /* ---- entradas por setor ---- */
+  .grade-setores { display: grid; gap: 10px;
+                   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+  .dupla { display: grid; grid-template-columns: 1.4fr .8fr; gap: 8px; }
+  .faltas-campo { background: #0C1136; color: var(--texto);
+                  border: 1px solid var(--linha); border-radius: 6px;
+                  padding: 6px 8px; font-size: 12px;
+                  font-family: Consolas, monospace; width: 100%;
+                  resize: vertical; }
+
+  .rolagem { overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; }
+  .rolagem::-webkit-scrollbar { height: 10px; }
+  .rolagem::-webkit-scrollbar-thumb { background: var(--linha); border-radius: 5px; }
+  .grafico-geral { display: block; }
+  .legenda { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 10px; }
+  .legenda .item { font-size: 12px; color: var(--texto-fraco);
+                   display: flex; align-items: center; gap: 6px; }
+  .legenda svg { flex: 0 0 auto; }
+  .legenda b { color: var(--texto); font-weight: normal; }
+  .legenda em { font-style: normal; }
+  .setor-entrada { border: 1px solid var(--linha); border-radius: 8px;
+                   padding: 10px 12px; }
+  .setor-entrada .nome { font-size: 13px; margin-bottom: 8px; }
+  .setor-entrada .cod { font-size: 11px; color: var(--texto-fraco);
+                        font-family: Consolas, monospace; }
+
+  /* ---- cartão de resultado por setor ---- */
+  .resultados { display: grid; gap: 12px;
+                grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+  .setor-card { background: var(--cartao); border: 1px solid var(--linha);
+                border-radius: 10px; overflow: hidden; }
+  .setor-card header { background: var(--cartao-topo); padding: 12px 16px;
+                       border-top: 3px solid var(--scania); }
+  .setor-card .nome { font-size: 15px; font-weight: bold; }
+  .setor-card .faixa-info { font-size: 11px; color: var(--texto-fraco); }
+  .setor-card .corpo { padding: 14px 16px; }
+  .mini { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 10px; }
+  .mini div { font-size: 11px; color: var(--texto-fraco); }
+  .mini b { display: block; font-size: 18px; color: var(--texto); }
+  .pastilha { font-size: 11px; border-radius: 10px; padding: 2px 9px;
+              border: 1px solid currentColor; }
+  .pastilha.alta, .pastilha.critico { color: var(--critico); }
+  .pastilha.media, .pastilha.atencao { color: var(--atencao); }
+  .pastilha.limpo, .pastilha.ok { color: var(--ok); }
+
+  .variantes { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+  .barra-var { display: grid; grid-template-columns: 78px 1fr 58px;
+               gap: 8px; align-items: center; font-size: 12px; }
+  .barra-var .trilho { background: #0C1136; border-radius: 3px; height: 9px;
+                       overflow: hidden; }
+  .barra-var .trilho i { display: block; height: 100%; }
+  .barra-var .trilho i.ok { background: var(--ok); }
+  .barra-var .trilho i.atencao { background: var(--atencao); }
+  .barra-var .trilho i.critico { background: var(--critico); }
+  .barra-var .valor { text-align: right; font-family: Consolas, monospace; }
+
+  .curva { margin-top: 12px; }
+  .curva svg { display: block; width: 100%; height: 54px; }
+  .curva .rot { font-size: 10px; color: var(--texto-fraco); margin-top: 3px; }
+
+  .erro-setor { color: var(--critico); font-size: 12px; }
+
+  /* ---- gargalos consolidados ---- */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 10px; letter-spacing: 1px; font-weight: normal;
+       color: var(--texto-fraco); padding-bottom: 6px; }
+  td { padding: 8px 12px 8px 0; border-top: 1px solid var(--linha);
+       vertical-align: top; }
+  td.mono { font-family: Consolas, monospace; font-size: 12px; }
+  .membros span { display: inline-block; margin: 0 8px 3px 0;
+                  font-family: Consolas, monospace; font-size: 12px; }
+  .membros i { color: var(--texto-fraco); font-style: normal; }
+  .vazio { color: var(--texto-fraco); font-size: 13px; }
+  .titulo-acoes { display: flex; flex-wrap: wrap; gap: 12px;
+                  align-items: center; margin-bottom: 14px; }
+  .acoes-export { margin-left: auto; display: flex; flex-wrap: wrap; gap: 8px; }
+  .acoes-export a { font-size: 12px; text-decoration: none;
+                    color: var(--texto-fraco); border: 1px solid var(--linha);
+                    border-radius: 6px; padding: 5px 12px; }
+  .acoes-export a:hover { color: var(--texto); border-color: var(--texto-fraco); }
+  .acoes-export a.destaque { color: var(--texto); border-color: var(--scania);
+                             font-weight: bold; letter-spacing: .5px; }
+  .acoes-export a.destaque:hover { background: var(--scania); }
+  @media (max-width: 700px) { .acoes-export { margin-left: 0; } }
+
+  .alerta { border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+  .alerta .texto { font-weight: bold; letter-spacing: .5px; }
+  .alerta.critico { background: #4A1220; border: 1px solid var(--critico);
+                    color: #FFD3D5; }
+  .alerta.alto { background: #3D3211; border: 1px solid var(--atencao);
+                 color: #F7E7BB; }
+
+  @media (max-width: 700px) {
+    body { padding: 16px 14px 40px; }
+    .grade-setores, .resultados { grid-template-columns: 1fr; }
+    button { width: 100%; min-height: 44px; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    th { display: none; }
+    tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    td { border-top: 0; padding: 2px 0; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1>PAINEL DA <span>FÁBRICA</span></h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  <a href="{{ url_for('tela_setores') }}">setores</a> ·
+  <a href="{{ url_for('gargalos_regras') }}">regras de gargalo</a> ·
+  <a href="{{ url_for('exportar_regras_todos', formato='json') }}">exportar
+    regras da fábrica (.json)</a> ·
+  todos os setores a partir da mesma planilha
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+{% if avisos_planilha %}
+<div class="aviso-box">
+  {% for aviso in avisos_planilha %}⚠ {{ aviso }}<br>{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+  <div class="painel">
+    <h2>PLANILHAS{% if info_dados %} · {{ info_dados }}{% endif %}</h2>
+    <div style="display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end">
+      {% if com_disponivel %}
+      <button type="submit" class="sec" name="acao" value="outlook">
+        BAIXAR DO OUTLOOK
+      </button>
+      {% endif %}
+      <div style="flex:1 1 320px">
+        <label>ou envie as duas planilhas</label>
+        <input type="file" name="planilhas" accept=".xlsx,.xlsm" multiple>
+      </div>
+    </div>
+    {% if arquivos_outlook %}
+    <div class="sub" style="margin:10px 0 0">
+      {% for a in arquivos_outlook %}{{ a.nome }}{% if not loop.last %} · {% endif %}{% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="painel">
+    <h2>DADOS DO TURNO · VALEM PARA A FÁBRICA TODA</h2>
+    <div class="globais">
+      <div>
+        <label>Turno</label>
+        {# Trocar o turno navega em GET: assim os campos voltam com os
+           numeros daquele turno, em vez de levar os do turno anterior. #}
+        <select name="turno"
+                onchange="location = '{{ url_for('painel') }}?turno=' + this.value">
+          {% for t in turnos.values() %}
+          <option value="{{ t.id }}" {{ 'selected' if t.id == turno.id }}>
+            {{ t.nome }}{% if t.inicio %} · {{ t.inicio }}–{{ t.fim }}{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label>Produção do turno (veículos)</label>
+        <input type="text" name="producao_geral"
+               value="{{ pedidos['_geral'].producao }}" placeholder="Ex.: 88">
+      </div>
+      <div>
+        <label>Takt (s/veículo)</label>
+        <input type="text" name="takt_geral"
+               value="{{ pedidos['_geral'].takt }}" placeholder="vazio = takt de cada setor">
+      </div>
+      <div class="sub" style="margin:0; align-self:end">
+        {{ turno.descricao }}.
+        {% if turno.takt_obrigatorio %}
+        <b style="color:var(--atencao)">Informe o takt</b> — o cadastrado em
+        cada setor vale para o 1º turno.
+        {% else %}
+        Takt preenchido vale para todos os setores e ignora o cadastro.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="painel">
+    <h2>POPID DE CORTE POR SETOR</h2>
+    <div class="grade-setores">
+      {% for s in setores %}
+      <div class="setor-entrada">
+        <div class="nome">{{ s.nome }} <span class="cod">{{ s.id }}</span></div>
+        <div class="dupla">
+          <div>
+            <label>POPID</label>
+            <input type="text" name="popid_{{ s.id }}"
+                   value="{{ pedidos[s.id].popid }}">
+          </div>
+          <div>
+            <label>Faltas</label>
+            <textarea name="faltas_{{ s.id }}" class="faltas-campo" rows="2"
+                      placeholder="2  ou  10:00-12:00=2">{{ pedidos[s.id].faltas }}</textarea>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="sub" style="margin:12px 0 0">
+      <b>Faltas</b> aceita um número (vale o turno inteiro) ou um horário por
+      linha — <code>10:00-12:00=2</code> — quando as ausências mudam ao longo
+      do turno. Setor sem POPID fica de fora da análise. Produção, takt e
+      POPIDs são
+      guardados <b>por turno</b> — trocar o turno traz os números daquele turno.
+    </div>
+    <div style="margin-top:14px">
+      <button type="submit" name="acao" value="analisar">ATUALIZAR PAINEL</button>
+    </div>
+  </div>
+</form>
+
+{% if resumo %}
+<div class="numeros">
+  <div class="numero">
+    <div class="rot">SETORES</div>
+    <div class="val">{{ resumo.setores_analisados }}</div>
+    <div class="obs">
+      {% if resumo.setores_com_erro %}{{ resumo.setores_com_erro }} com erro
+      {% else %}analisados{% endif %}
+    </div>
+  </div>
+  <div class="numero">
+    <div class="rot">GARGALOS</div>
+    <div class="val {{ 'critico' if resumo.alta else ('atencao' if resumo.media else 'ok') }}">
+      {{ resumo.total_gargalos }}</div>
+    <div class="obs">{{ resumo.alta }} alta · {{ resumo.media }} média</div>
+  </div>
+  <div class="numero">
+    <div class="rot">VARIANTES ≥ 100%</div>
+    <div class="val {{ 'critico' if resumo.variantes_criticas else 'ok' }}">
+      {{ resumo.variantes_criticas }}</div>
+    <div class="obs">postos sem folga</div>
+  </div>
+  <div class="numero">
+    <div class="rot">POSTOS ATIVOS</div>
+    <div class="val {{ 'atencao' if resumo.postos_ativos < resumo.postos_totais else 'ok' }}">
+      {{ resumo.postos_ativos }}<span style="font-size:15px; color:var(--texto-fraco)">/{{ resumo.postos_totais }}</span>
+    </div>
+    <div class="obs">{{ resumo.faltas }} ausência(s)</div>
+  </div>
+</div>
+
+{% if resumo.alertas %}
+<div class="painel">
+  <h2>ALERTAS</h2>
+  {% for alerta in resumo.alertas %}
+  <div class="alerta {{ alerta.nivel }}">
+    <span class="texto">{{ alerta.setor.nome }} · {{ alerta.texto }}</span>
+    <span>{{ alerta.detalhe }}</span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if momentos_criticos %}
+<div class="painel">
+  <h2>MOMENTOS MAIS CRÍTICOS DO DIA ({{ momentos_criticos|length }})</h2>
+  <div class="sub" style="margin:0 0 12px">
+    Onde uma <b>montagem complexa</b> caiu numa janela com <b>menos gente</b> —
+    o cruzamento entre gargalo e o horário de falta de cada setor. Ordenado
+    pela pior sobrecarga primeiro.
+  </div>
+  <table>
+    <tr>
+      <th>Setor</th><th>Horário</th><th>Sev.</th><th>Regra</th>
+      <th>Faltas</th><th>Postos no trecho</th><th>Sobrecarga</th>
+    </tr>
+    {% for m in momentos_criticos[:15] %}
+    <tr>
+      <td>{{ m.setor.nome }}</td>
+      <td class="mono">{{ m.hora }}</td>
+      <td><span class="pastilha {{ m.severidade|lower }}">{{ m.severidade }}</span></td>
+      <td>{{ m.regra }}</td>
+      <td>{{ m.faltas }}</td>
+      <td>{{ m.postos_no_trecho|int }} de {{ m.postos_cheios }}</td>
+      <td>
+        <b class="{{ 'critico' if m.sobrecarga >= 100 else 'atencao' }}">
+          {{ m.sobrecarga|round|int }}%</b>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% if momentos_criticos|length > 15 %}
+  <div class="sub" style="margin-top:8px">
+    mais {{ momentos_criticos|length - 15 }} momento(s) — completo no PDF.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="resultados">
+  {% for linha in linhas %}
+  <section class="setor-card">
+    <header>
+      <div class="nome">{{ linha.setor.nome }}</div>
+      {% if linha.resultado %}
+      <div class="faixa-info">
+        POPID {{ linha.resultado.popid }} ·
+        {{ linha.resultado.total_linhas }} veículos ·
+        takt {{ linha.setor.takt_segundos|int }} s
+      </div>
+      {% endif %}
+    </header>
+    <div class="corpo">
+      {% if linha.erro %}
+      <div class="erro-setor">{{ linha.erro }}</div>
+      {% else %}
+      {% set g = linha.gargalos.resumo %}
+      <div class="mini">
+        <div>GARGALOS<b>{{ g.total }}</b></div>
+        <div>ALTA<b class="{{ 'critico' if g.alta else '' }}">{{ g.alta }}</b></div>
+        <div>MÉDIA<b class="{{ 'atencao' if g.media else '' }}">{{ g.media }}</b></div>
+        <div>POSTOS<b>{{ linha.resultado.postos_ativos }}/{{ linha.resultado.postos_originais }}</b></div>
+      </div>
+
+      <div class="variantes">
+        {% for v in linha.resultado.variantes.values() %}
+        {% set faixa = 'critico' if v.total >= 100 else ('atencao' if v.total >= 90 else 'ok') %}
+        <div class="barra-var">
+          <span>{{ v.nome }}</span>
+          <span class="trilho">
+            <i class="{{ faixa }}" style="width: {{ [v.total / 150 * 100, 100]|min }}%"></i>
+          </span>
+          <span class="valor {{ faixa }}">{{ v.total_fmt }}</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if linha.curva and linha.curva.linha %}
+      <div class="curva">
+        <svg viewBox="0 0 {{ linha.curva.largura }} {{ linha.curva.altura }}"
+             preserveAspectRatio="none">
+          <polygon points="{{ linha.curva.area }}" fill="#4CC76A" opacity="0.18"/>
+          <polyline points="{{ linha.curva.linha }}" fill="none"
+                    stroke="#8FD8A0" stroke-width="1.4"/>
+          <line x1="0" y1="{{ linha.curva.y_capacidade }}"
+                x2="{{ linha.curva.largura }}" y2="{{ linha.curva.y_capacidade }}"
+                stroke="#FF5C61" stroke-width="1" stroke-dasharray="4 3"/>
+        </svg>
+        <div class="rot">
+          demanda ao longo da sequência · tracejado = capacidade
+          ({{ linha.capacidade|int }}%)
+        </div>
+      </div>
+      {% endif %}
+      {% endif %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+
+{% if curva_geral and not curva_geral.vazio %}
+<div class="painel" style="margin-top:16px">
+  <h2>{{ turno.nome|upper }} · {{ curva_geral.inicio }} às {{ curva_geral.fim }}
+      {% if curva_geral.total_gargalos %}
+      · {{ curva_geral.total_gargalos }} gargalo(s){% endif %}</h2>
+
+  <div class="rolagem">
+    <svg class="grafico-geral"
+         width="{{ curva_geral.largura }}" height="{{ curva_geral.altura_total }}"
+         viewBox="0 0 {{ curva_geral.largura }} {{ curva_geral.altura_total }}">
+      {% for marca in curva_geral.marcas %}
+      <line x1="{{ curva_geral.margem_esq }}" y1="{{ marca.y }}"
+            x2="{{ curva_geral.largura }}" y2="{{ marca.y }}"
+            stroke="{{ '#FF5C61' if marca.valor == 100 else '#2C3890' }}"
+            stroke-width="1"
+            {% if marca.valor == 100 %}stroke-dasharray="5 4"{% endif %}/>
+      <text x="{{ curva_geral.margem_esq - 6 }}" y="{{ marca.y + 3 }}"
+            text-anchor="end" font-size="9"
+            fill="{{ '#FF5C61' if marca.valor == 100 else '#A9B0D8' }}"
+            >{{ marca.valor }}%</text>
+      {% endfor %}
+
+      {% for hora in curva_geral.horas %}
+      <line x1="{{ hora.x }}" y1="0" x2="{{ hora.x }}"
+            y2="{{ curva_geral.altura }}" stroke="#233073" stroke-width="1"/>
+      <text x="{{ hora.x }}" y="{{ curva_geral.altura + 13 }}"
+            text-anchor="middle" font-size="9" fill="#A9B0D8">{{ hora.rotulo }}</text>
+      {% endfor %}
+
+      {# Sombra no corpo do grafico so para severidade ALTA: com 7 setores,
+         sombrear tudo apagaria as curvas. O detalhe fica nas trilhas. #}
+      {% for faixa in curva_geral.faixas %}
+        {% for gargalo in faixa.gargalos if gargalo.severidade == 'ALTA' %}
+        <rect x="{{ gargalo.x }}" y="0" width="{{ gargalo.largura }}"
+              height="{{ curva_geral.altura }}" fill="{{ faixa.cor }}"
+              opacity="0.10"/>
+        {% endfor %}
+      {% endfor %}
+
+      {% for serie in curva_geral.series %}
+      <polyline points="{{ serie.pontos }}" fill="none" stroke="{{ serie.cor }}"
+                stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round">
+        <title>{{ serie.rotulo }} — pico {{ '%.0f'|format(serie.pico) }}% às {{ serie.hora_pico }}</title>
+      </polyline>
+      <circle cx="{{ serie.x_pico }}" cy="{{ serie.y_pico }}" r="3.5"
+              fill="{{ serie.cor }}" stroke="#0C1016" stroke-width="1.2">
+        <title>{{ serie.rotulo }} — pico {{ '%.0f'|format(serie.pico) }}% às {{ serie.hora_pico }}</title>
+      </circle>
+      {% endfor %}
+
+      {# Uma trilha por setor, na cor dele: onde a regra de gargalo disparou.
+         Fora do corpo do grafico, para nao competir com as curvas. #}
+      {% for faixa in curva_geral.faixas %}
+      <text x="{{ curva_geral.margem_esq - 6 }}"
+            y="{{ faixa.y + curva_geral.altura_trilha - 2 }}"
+            text-anchor="end" font-size="8" fill="{{ faixa.cor }}"
+            >{{ faixa.setor.nome }}</text>
+      <rect x="{{ curva_geral.margem_esq }}" y="{{ faixa.y }}"
+            width="{{ curva_geral.largura - curva_geral.margem_esq - 10 }}"
+            height="{{ curva_geral.altura_trilha }}" fill="#0C1136" rx="2"/>
+      {% for gargalo in faixa.gargalos %}
+      <rect x="{{ gargalo.x }}" y="{{ faixa.y }}" width="{{ gargalo.largura }}"
+            height="{{ curva_geral.altura_trilha }}" fill="{{ faixa.cor }}"
+            opacity="{{ gargalo.opacidade }}" rx="2">
+        <title>{{ faixa.setor.nome }} · {{ gargalo.severidade }} · {{ gargalo.regra }}
+(posições {{ gargalo.a + 1 }}–{{ gargalo.b + 1 }})</title>
+      </rect>
+      {% endfor %}
+      {% endfor %}
+    </svg>
+  </div>
+
+  <div class="legenda">
+    {% for serie in curva_geral.series %}
+    <span class="item">
+      <svg width="22" height="6"><line x1="0" y1="3" x2="22" y2="3"
+        stroke="{{ serie.cor }}" stroke-width="3"/></svg>
+      <b style="color: var(--texto)">{{ serie.rotulo }}</b>
+      <span class="{{ 'critico' if serie.pico >= 100 else ('atencao' if serie.pico >= 90 else 'ok') }}">
+        pico {{ '%.0f'|format(serie.pico) }}% às {{ serie.hora_pico }}</span>
+      <em>média {{ '%.0f'|format(serie.media) }}%</em>
+      {% if serie.variante_critica %}
+      <em>· puxa: {{ serie.variante_critica }}</em>
+      {% endif %}
+    </span>
+    {% endfor %}
+  </div>
+
+  <div class="sub" style="margin:10px 0 0">
+    Uma linha por <b>função</b>. O eixo é a <b>hora do dia</b>, com as pausas
+    descontadas: duas linhas que sobem juntas são dois setores apertando ao
+    mesmo tempo. O eixo vertical é <b>% da capacidade daquela função</b> — 100%
+    é o limite dos postos ativos dela, valendo igual para um setor de 4 postos
+    e outro de 1. O ponto cheio marca o pico, e a legenda diz a que horas ele
+    acontece e qual variante o puxa.
+    <br>
+    Abaixo do gráfico, uma <b>trilha por setor</b> marca quando as regras de
+    gargalo dispararam — cor cheia para severidade alta, esmaecida para média.
+    Os trechos de alta também aparecem sombreados sobre as curvas. Gargalo e
+    pico de demanda são coisas diferentes: um trecho pode disparar regra sem a
+    curva subir (carros pesados chegando juntos) e vice-versa.
+  </div>
+</div>
+{% endif %}
+
+<div class="painel" style="margin-top:16px">
+  <div class="titulo-acoes">
+    <h2 style="margin:0">GARGALOS DA LINHA ({{ resumo.total_gargalos }})</h2>
+    <span class="acoes-export">
+      {% if pdf_disponivel and params_pdf %}
+      <a class="destaque"
+         href="{{ url_for('relatorio_fabrica_pdf', **params_pdf) }}">
+        RELATÓRIO EM PDF</a>
+      {% endif %}
+      <a href="{{ url_for('exportar_regras_todos', formato='json') }}"
+         title="Backup completo — é este que o import aceita">
+        regras · .json</a>
+      <a href="{{ url_for('exportar_regras_todos', formato='tsv') }}"
+         title="Só para abrir no Excel; não pode ser reimportado">
+        regras · .tsv</a>
+      <a href="{{ url_for('gargalos_regras') }}">editar regras</a>
+    </span>
+  </div>
+  {% if resumo.gargalos %}
+  <table>
+    <tr>
+      <th>Setor</th><th>Sev.</th><th>Regra</th><th>Posições</th>
+      <th>Veículos</th><th>O que fazer</th>
+    </tr>
+    {% for g in resumo.gargalos %}
+    <tr>
+      <td>{{ g.setor.nome }}</td>
+      <td><span class="pastilha {{ g.severidade|lower }}">{{ g.severidade }}</span></td>
+      <td>{{ g.regra }}</td>
+      <td class="mono">{{ g.a }}–{{ g.b }}</td>
+      <td class="membros">
+        {% for m in g.membros %}
+        <span>{{ m.popid }}{% if m.seq %}<i>/{{ m.seq }}</i>{% endif %}</span>
+        {% endfor %}
+      </td>
+      <td class="sub" style="margin:0">{{ g.detalhe }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <div class="vazio">Nenhuma regra de gargalo disparou nos setores analisados.</div>
+  {% endif %}
+</div>
+{% endif %}
+
+</body>
+</html>

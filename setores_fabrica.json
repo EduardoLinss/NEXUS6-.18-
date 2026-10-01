@@ -1,0 +1,16 @@
+{
+  "setores": [
+    {
+      "id": "fa2",
+      "nome": "FA2",
+      "descricao": "Montagem final — variantes, CPM MIX e gargalos.",
+      "takt_segundos": 300,
+      "inicio_turno": "07:05",
+      "fim_turno": "16:05",
+      "pausas": [["09:00", "09:04"], ["10:55", "11:55"], ["14:00", "14:10"]],
+      "postos": 4,
+      "postos_por_faltas": {"0": null, "1": null, "2": 2},
+      "gargalos_varios": 2
+    }
+  ]
+}

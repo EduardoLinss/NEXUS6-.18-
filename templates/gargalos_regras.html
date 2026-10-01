@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Regras de gargalo</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  input[type=text], input[type=number], select {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 150px;
+  }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.leve { background: #1E3A8A; padding: 6px 14px; font-weight: normal;
+                font-size: 13px; }
+  button.leve:hover { background: #1D4ED8; }
+  button.perigo { background: transparent; border: 1px solid var(--critico);
+                  color: var(--critico); padding: 6px 14px; font-weight: normal;
+                  font-size: 13px; }
+  button.perigo:hover { background: var(--critico); color: #fff; }
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .linha { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .erro { background: #4A1220; border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+
+  /* ---- painel de gargalos ---- */
+  .gargalos { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 22px; }
+  .garg-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+               margin-bottom: 12px; }
+  .garg-topo b { font-size: 12px; letter-spacing: 1px; }
+  .garg-resumo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .garg-link { margin-left: auto; color: var(--texto-fraco); font-size: 12px; }
+  .garg-fraco { color: var(--texto-fraco); font-size: 12px; }
+  .pastilha { font-size: 11px; border-radius: 10px; padding: 2px 9px;
+              border: 1px solid currentColor; }
+  .pastilha.alta { color: var(--critico); }
+  .pastilha.media { color: var(--atencao); }
+  .pastilha.limpo { color: var(--ok); }
+
+  .faixa { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 14px; }
+  .faixa .bloco { width: 11px; height: 16px; border-radius: 2px;
+                  background: var(--linha); }
+  .faixa .bloco.alta { background: var(--critico); }
+  .faixa .bloco.media { background: var(--atencao); }
+  .faixa .bloco.nenhum { background: #263079; }
+
+  .garg-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .garg-tab th { text-align: left; font-weight: normal; font-size: 10px;
+                 letter-spacing: 1px; color: var(--texto-fraco);
+                 padding-bottom: 6px; }
+  .garg-tab td { padding: 8px 12px 8px 0; border-top: 1px solid var(--linha);
+                 vertical-align: top; }
+  .garg-tab .mono { font-family: Consolas, monospace; font-size: 12px; }
+  .garg-membros span { display: inline-block; margin: 0 8px 3px 0; }
+  .garg-membros i { color: var(--texto-fraco); font-style: normal; }
+
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    input[type=text], input[type=number], select { width: 100%; font-size: 16px; }
+    .linha > div { flex: 1 1 100%; min-width: 0; }
+    .linha > button { width: 100%; }
+    button { min-height: 44px; }
+    .garg-link { margin-left: 0; }
+    .garg-tab, .garg-tab tbody, .garg-tab tr, .garg-tab td { display: block;
+                width: 100%; }
+    .garg-tab th { display: none; }
+    .garg-tab tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    .garg-tab td { border-top: 0; padding: 3px 0; }
+  }
+
+  .grade { display: grid; gap: 12px;
+           grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .regra { background: var(--cartao); border: 1px solid var(--linha);
+           border-radius: 10px; padding: 14px 16px; }
+  .regra .topo { display: flex; gap: 10px; align-items: baseline; }
+  .regra .nome { font-size: 14px; }
+  .regra .cod { font-size: 11px; color: var(--texto-fraco);
+                font-family: Consolas, monospace; }
+  .regra .tipo { font-size: 11px; color: var(--texto-fraco); margin-top: 4px; }
+  .regra .desc { font-size: 12px; color: var(--texto-fraco); margin-top: 8px;
+                 font-family: Consolas, monospace; }
+  .regra .acoes { margin-top: 12px; display: flex; gap: 8px; }
+  .cond { display: grid; grid-template-columns: 1.3fr .9fr 1.3fr; gap: 10px;
+          margin-bottom: 8px; }
+  .cond select, .cond input { width: 100%; }
+  .grupo { border: 1px solid var(--linha); border-radius: 8px;
+           padding: 12px 14px; margin-bottom: 12px; }
+  .grupo h3 { font-size: 11px; letter-spacing: 1px; color: var(--texto-fraco);
+              font-weight: normal; margin: 0 0 10px; }
+  .dica { font-size: 12px; color: var(--texto-fraco); margin: 4px 0 14px; }
+  form.inline { display: inline; }
+  .linha-titulo { display: flex; align-items: center; gap: 14px;
+                  margin: 0 0 12px; }
+  .botao-export { margin-left: auto; text-decoration: none; color: var(--texto);
+                  border: 1px solid var(--scania); border-radius: 6px;
+                  padding: 8px 18px; font-size: 12px; font-weight: bold;
+                  letter-spacing: 1px; white-space: nowrap; }
+  .botao-export:hover { background: var(--scania); }
+  @media (max-width: 700px) {
+    .linha-titulo { flex-wrap: wrap; }
+    .botao-export { margin-left: 0; width: 100%; text-align: center; }
+  }
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin-bottom: 16px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+
+  .importar { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 14px; }
+  .importar b { font-size: 12px; letter-spacing: 1px; }
+  .importar .linha-imp { display: flex; flex-wrap: wrap; gap: 12px;
+                         align-items: center; margin-top: 10px; }
+  .importar input[type=file] { background: #0C1136; color: var(--texto);
+                               border: 1px solid var(--linha); border-radius: 6px;
+                               padding: 6px; font-size: 13px; width: 320px; }
+  .importar .dica-imp { font-size: 11px; color: var(--texto-fraco);
+                        margin-top: 8px; }
+  @media (max-width: 700px) {
+    .importar input[type=file] { width: 100%; }
+    .importar .linha-imp > * { flex: 1 1 100%; }
+  }
+
+  @media (max-width: 700px) {
+    .grade { grid-template-columns: 1fr; }
+    .cond { grid-template-columns: 1fr; gap: 8px; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+
+<h1>REGRAS DE <span>GARGALO</span></h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  <a href="{{ url_for('gargalos_tela') }}">ver gargalos</a> ·
+  <a href="{{ url_for('analise') }}">análise de MIX</a> ·
+  <a href="{{ url_for('exportar_regras_todos', formato='json') }}">exportar
+    regras de todos os setores (.json)</a>
+</div>
+
+<div class="barra-setor">
+  <span class="rot">SETOR</span>
+  {% for s in setores %}
+  <a href="{{ url_for(request.endpoint, setor=s.id) }}"
+     class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+  {% endfor %}
+  <a href="{{ url_for('tela_setores') }}" title="Cadastrar setores">+</a>
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+
+{% macro campos_condicao(condicoes, prefixo, logica_nome, logica_valor) %}
+  <div class="linha" style="margin-bottom:10px">
+    <div style="width:auto">
+      <label>Combinar as condições com</label>
+      <select name="{{ logica_nome }}">
+        <option value="E" {{ 'selected' if logica_valor != 'OU' }}>E — todas</option>
+        <option value="OU" {{ 'selected' if logica_valor == 'OU' }}>OU — qualquer uma</option>
+      </select>
+    </div>
+  </div>
+  {% for i in range(1, max_condicoes + 1) %}
+  {% set cond = condicoes[i-1] %}
+  <div class="cond">
+    <input type="text" name="{{ prefixo }}coluna_{{ i }}" list="lista_colunas"
+           value="{{ cond.coluna }}" placeholder="coluna">
+    <select name="{{ prefixo }}operador_{{ i }}">
+      {% for chave, rotulo in operadores.items() %}
+      <option value="{{ chave }}" {{ 'selected' if chave == cond.operador }}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="{{ prefixo }}valor_{{ i }}" value="{{ cond.valor }}"
+           placeholder="valor">
+  </div>
+  {% endfor %}
+{% endmacro %}
+
+<datalist id="lista_colunas">
+  {% for coluna in colunas %}<option value="{{ coluna }}">{% endfor %}
+</datalist>
+
+<form method="post" class="painel">
+  <h2>{{ 'EDITANDO: ' ~ editando.nome if editando.id else 'NOVA REGRA' }}</h2>
+  <input type="hidden" name="acao" value="salvar">
+  <input type="hidden" name="regra_id" value="{{ editando.id }}">
+
+  <div class="linha" style="margin-bottom:14px">
+    <div style="flex:1 1 260px">
+      <label>Nome da regra</label>
+      <input type="text" name="nome" value="{{ editando.nome }}" style="width:100%">
+    </div>
+    <div style="flex:1 1 320px">
+      <label>Tipo</label>
+      <select name="tipo" id="tipo" onchange="trocarTipo()" style="width:100%">
+        {% for chave, rotulo in tipos.items() %}
+        <option value="{{ chave }}" {{ 'selected' if chave == editando.tipo }}>{{ rotulo }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Severidade</label>
+      <select name="severidade">
+        {% for sev in severidades %}
+        <option value="{{ sev }}" {{ 'selected' if sev == editando.severidade }}>{{ sev }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <!-- unidade_critica: sem janela nem minimo -->
+  <div class="bloco-tipo" data-tipo="unidade_critica">
+    <div class="dica">
+      Cada carro que atender às condições já é um gargalo, sozinho. É o caso da
+      variante de alta complexidade — não precisa estar em sequência, embora
+      duas seguidas apareçam como uma faixa única.
+    </div>
+  </div>
+
+  <!-- contagem_janela -->
+  <div class="bloco-tipo" data-tipo="contagem_janela">
+    <div class="linha" style="margin-bottom:10px">
+      <div>
+        <label>Mínimo de ocorrências</label>
+        <input type="number" name="min_ocorrencias" min="2"
+               value="{{ editando.params.min_ocorrencias }}">
+      </div>
+      <div>
+        <label>Dentro de uma janela de</label>
+        <input type="number" name="janela" min="2" value="{{ editando.params.janela }}">
+      </div>
+    </div>
+    <div class="dica">
+      Dispara quando esse número de carros que atendem às condições aparece
+      dentro da janela, mesmo espalhados.
+    </div>
+  </div>
+
+  <!-- sequencia_consecutiva -->
+  <div class="bloco-tipo" data-tipo="sequencia_consecutiva">
+    <div class="linha" style="margin-bottom:10px">
+      <div>
+        <label>Mínimo de carros consecutivos</label>
+        <input type="number" name="min_seq" min="2" value="{{ editando.params.min_seq }}">
+      </div>
+    </div>
+    <div class="dica">Aqui os carros precisam estar <b>colados</b> na sequência.</div>
+  </div>
+
+  <!-- predicado unico (os dois tipos acima) -->
+  <div class="bloco-tipo" data-tipo="unidade_critica contagem_janela sequencia_consecutiva">
+    {{ campos_condicao(editando.params.condicoes, '', 'logica', editando.params.logica) }}
+  </div>
+
+  <!-- coocorrencia_janela -->
+  <div class="bloco-tipo" data-tipo="coocorrencia_janela">
+    <div class="linha" style="margin-bottom:12px">
+      <div>
+        <label>Janela de</label>
+        <input type="number" name="janela" min="2" value="{{ editando.params.janela }}">
+      </div>
+    </div>
+    <div class="dica">
+      Dispara quando os <b>dois grupos</b> aparecem dentro da mesma janela.
+      É o encontro deles que caracteriza o gargalo.
+    </div>
+    {% for n in range(1, max_grupos + 1) %}
+    {% set grupo = editando.params.grupos[n-1] %}
+    <div class="grupo">
+      <h3>GRUPO {{ n }}</h3>
+      {{ campos_condicao(grupo.condicoes, 'g' ~ n ~ '_', 'g' ~ n ~ '_logica', grupo.logica) }}
+    </div>
+    {% endfor %}
+  </div>
+
+  <button type="submit">{{ 'SALVAR ALTERAÇÕES' if editando.id else 'CRIAR REGRA' }}</button>
+  {% if editando.id %}
+  <a href="{{ url_for('gargalos_regras') }}" style="margin-left:14px">cancelar</a>
+  {% endif %}
+</form>
+
+<div class="linha-titulo">
+  <h2 style="font-size:12px; letter-spacing:1px; color:var(--texto-fraco);
+             font-weight:normal; margin:0">REGRAS ATIVAS ({{ regras|length }})</h2>
+  <a class="botao-export"
+     href="{{ url_for('exportar_regras_setor', formato='json') }}">
+    EXPORTAR REGRAS
+  </a>
+</div>
+
+<div class="grade">
+  {% for regra in regras %}
+  <div class="regra">
+    <div class="topo">
+      <span class="nome">{{ regra.nome }}</span>
+      <span class="pastilha {{ regra.severidade|lower }}">{{ regra.severidade }}</span>
+    </div>
+    <div class="cod">{{ regra.id }}</div>
+    <div class="tipo">{{ tipos[regra.tipo] }}</div>
+    <div class="desc">{{ descrever(regra) }}</div>
+    <div class="acoes">
+      <a href="{{ url_for('gargalos_regras', editar=regra.id) }}">
+        <button type="button" class="leve">editar</button>
+      </a>
+      <form method="post" class="inline"
+            onsubmit="return confirm('Remover a regra {{ regra.nome }}?')">
+        <input type="hidden" name="acao" value="remover">
+        <input type="hidden" name="regra_id" value="{{ regra.id }}">
+        <button type="submit" class="perigo">remover</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+
+
+
+<form method="post" enctype="multipart/form-data" class="importar"
+      onsubmit="return confirm('Isso substitui tudo o que está salvo agora. Uma cópia do atual será guardada. Continuar?')">
+  <input type="hidden" name="acao" value="importar">
+  <b>IMPORTAR</b>
+  <div class="linha-imp">
+    <input type="file" name="arquivo" accept=".json,application/json" required>
+    <button type="submit" class="leve" style="padding:9px 16px">IMPORTAR .JSON</button>
+  </div>
+  <div class="dica-imp">
+    Use o <b>.json</b> — o .tsv é só para abrir no Excel e não pode ser
+    reimportado. Serve tanto o .json deste setor quanto o da fábrica inteira. O conteúdo é
+    conferido antes de gravar — se estiver quebrado, nada muda. Uma cópia do
+    que está no ar é guardada automaticamente na pasta de dados.
+  </div>
+</form>
+
+<form method="post" style="margin-top:22px"
+      onsubmit="return confirm('Isso apaga as regras criadas e volta ao padrão de fábrica. Continuar?')">
+  <input type="hidden" name="acao" value="restaurar">
+  <button type="submit" class="perigo">restaurar padrão</button>
+</form>
+
+<script>
+  function trocarTipo() {
+    var tipo = document.getElementById("tipo").value;
+    document.querySelectorAll(".bloco-tipo").forEach(function (bloco) {
+      var tipos = bloco.getAttribute("data-tipo").split(" ");
+      bloco.style.display = tipos.indexOf(tipo) >= 0 ? "" : "none";
+      // campos escondidos nao devem ser enviados
+      bloco.querySelectorAll("input, select").forEach(function (campo) {
+        campo.disabled = tipos.indexOf(tipo) < 0;
+      });
+    });
+  }
+  trocarTipo();
+</script>
+
+</body>
+</html>

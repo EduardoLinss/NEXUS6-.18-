@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.tmp
+
+# Arquivos que os usuários alteram — não devem sobrescrever o que está no ar
+catalogo.json
+regras.json
+filtro_mix.json
+tags_mona.json
+sessoes/
+processados/

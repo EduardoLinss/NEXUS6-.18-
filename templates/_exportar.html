@@ -1,0 +1,92 @@
+{#
+  Bloco de exportacao reutilizavel.
+
+  Uso:
+    {% with id='res', titulo='EXPORTAR RESULTADO',
+            tsv=export_tsv, texto=export_texto, downloads=[] %}
+      {% include '_exportar.html' %}
+    {% endwith %}
+
+  `downloads` e uma lista de (rotulo, url) opcional.
+#}
+<div class="exportar" id="exp_{{ id }}">
+  <div class="exp-topo">
+    <b>{{ titulo }}</b>
+    <span class="exp-abas">
+      <button type="button" class="aba ativa"
+              onclick="trocarAba('{{ id }}', 'tsv', this)">Tabela (Excel)</button>
+      <button type="button" class="aba"
+              onclick="trocarAba('{{ id }}', 'texto', this)">Texto</button>
+    </span>
+    <span class="exp-acoes">
+      <button type="button" class="copiar" onclick="copiar('{{ id }}', this)">
+        COPIAR
+      </button>
+      {% for rotulo, url in downloads or [] %}
+      <a class="baixar" href="{{ url }}">{{ rotulo }}</a>
+      {% endfor %}
+    </span>
+  </div>
+
+  <textarea id="area_{{ id }}_tsv" readonly spellcheck="false">{{ tsv }}</textarea>
+  <textarea id="area_{{ id }}_texto" readonly spellcheck="false"
+            style="display:none">{{ texto }}</textarea>
+
+  <div class="exp-dica" id="dica_{{ id }}">
+    Cole direto no Excel — cada campo cai em uma célula. Números com vírgula.
+  </div>
+</div>
+
+<script>
+// Definido uma vez, mesmo que o bloco apareça duas vezes na página.
+if (!window.__exportarPronto) {
+  window.__exportarPronto = true;
+
+  window.trocarAba = function (id, aba, botao) {
+    ["tsv", "texto"].forEach(function (nome) {
+      document.getElementById("area_" + id + "_" + nome).style.display =
+        nome === aba ? "" : "none";
+    });
+    botao.parentNode.querySelectorAll(".aba").forEach(function (b) {
+      b.classList.remove("ativa");
+    });
+    botao.classList.add("ativa");
+    document.getElementById("dica_" + id).textContent = aba === "tsv"
+      ? "Cole direto no Excel — cada campo cai em uma célula. Números com vírgula."
+      : "Texto pronto para e-mail, Teams ou WhatsApp.";
+  };
+
+  window.copiar = function (id, botao) {
+    var tsv = document.getElementById("area_" + id + "_tsv");
+    var texto = document.getElementById("area_" + id + "_texto");
+    var visivel = (tsv.style.display === "none") ? texto : tsv;
+
+    var pronto = function () {
+      var original = botao.textContent.trim();
+      botao.textContent = "COPIADO";
+      setTimeout(function () { botao.textContent = original; }, 1500);
+    };
+
+    // navigator.clipboard só funciona em https ou localhost; acessando pelo IP
+    // da rede o navegador bloqueia, por isso o execCommand continua aqui.
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(visivel.value).then(pronto, function () {
+        selecionarECopiar(visivel, pronto);
+      });
+    } else {
+      selecionarECopiar(visivel, pronto);
+    }
+  };
+
+  window.selecionarECopiar = function (campo, aoTerminar) {
+    campo.style.display = "";
+    campo.focus();
+    campo.select();
+    campo.setSelectionRange(0, campo.value.length);
+    try {
+      if (document.execCommand("copy")) { aoTerminar(); return; }
+    } catch (e) { /* cai na mensagem abaixo */ }
+    alert("Não consegui copiar sozinho. O texto já está selecionado — use Ctrl+C.");
+  };
+}
+</script>

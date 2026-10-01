@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filtro MIX</title>
+<style>
+  :root {
+    --fundo: #0F1642;
+    --cartao: #182160;
+    --cartao-topo: #1E2A75;
+    --linha: #2C3890;
+    --texto: #F2F2F2;
+    --texto-fraco: #A9B0D8;
+    --scania: #C20E17;
+    --ok: #4CC76A;
+    --atencao: #F2C14E;
+    --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 32px;
+    background: var(--fundo); color: var(--texto);
+    font: 14px/1.5 Arial, Helvetica, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+  .sub a { color: #7FD4FF; }
+
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .linha { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  input[type=text], input[type=number], input[type=file] {
+    background: #0C1136; color: var(--texto);
+    border: 1px solid var(--linha); border-radius: 6px;
+    padding: 8px 10px; font-size: 14px;
+  }
+  input[type=text] { width: 240px; }
+  input[type=number] { width: 110px; }
+  input[type=file] { width: 340px; padding: 6px; }
+  button {
+    background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+    padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer;
+  }
+  button:hover { background: #E00014; }
+  button.sec { background: #2E8B57; }
+  button.sec:hover { background: #228B22; }
+  button.leve { background: #1E3A8A; }
+  button.leve:hover { background: #1D4ED8; }
+
+  .erro { background: #4A1220; border: 1px solid var(--critico);
+          color: #FFD3D5; padding: 10px 14px; border-radius: 6px;
+          margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .indisponivel { color: var(--atencao); font-size: 13px; }
+
+  .info { margin-top: 12px; font-size: 12px; color: var(--texto-fraco); }
+  .info b { color: var(--texto); font-weight: normal; }
+  .baixar { display: inline-block; margin-top: 10px; color: var(--texto);
+            text-decoration: none; border: 1px solid var(--ok);
+            border-radius: 6px; padding: 8px 16px; font-size: 13px; }
+  .baixar:hover { background: #123A22; }
+
+  .diag { list-style: none; padding: 0; margin: 0; }
+  .diag li { padding: 8px 0; border-top: 1px solid var(--linha);
+             display: flex; gap: 12px; align-items: baseline; }
+  .diag li:first-child { border-top: 0; }
+  .diag .marca { font-weight: bold; }
+  .diag .sim { color: var(--ok); }
+  .diag .nao { color: var(--critico); }
+  .diag .detalhe { color: var(--texto-fraco); font-size: 12px; }
+  .colunas-check { display: grid; gap: 6px 14px;
+                   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+                   background: #0C1136; border: 1px solid var(--linha);
+                   border-radius: 6px; padding: 12px 14px; max-height: 260px;
+                   overflow: auto; }
+  label.check { display: flex; align-items: center; gap: 8px; margin: 0;
+                font-size: 13px; color: var(--texto); cursor: pointer;
+                text-transform: none; letter-spacing: 0; }
+  label.check input { width: 16px; height: 16px; accent-color: var(--scania);
+                      flex: 0 0 auto; }
+  label.check span { overflow: hidden; text-overflow: ellipsis;
+                     white-space: nowrap; }
+  label a { color: #7FD4FF; margin-left: 4px; }
+  @media (max-width: 700px) {
+    .colunas-check { grid-template-columns: 1fr; max-height: 320px; }
+  }
+  .funcoes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .funcoes a { text-decoration: none; color: var(--texto-fraco);
+               border: 1px solid var(--linha); border-radius: 16px;
+               padding: 7px 18px; font-size: 13px; }
+  .funcoes a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .funcoes a.ativo { background: var(--scania); border-color: var(--scania);
+                     color: #fff; font-weight: bold; }
+  .campos-arquivo { display: grid; gap: 14px;
+                    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .opcional { color: var(--atencao); font-size: 11px; }
+  .nota { background: #12244A; border: 1px solid #2E5AA8; color: var(--texto-fraco);
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px;
+          font-size: 13px; }
+  @media (max-width: 700px) { .campos-arquivo { grid-template-columns: 1fr; } }
+  textarea { background: #0C1136; color: var(--texto); width: 100%;
+             border: 1px solid var(--linha); border-radius: 6px;
+             padding: 8px 10px; font: 13px/1.5 Consolas, monospace;
+             resize: vertical; }
+  .colunas-rel { display: flex; flex-wrap: wrap; gap: 22px; margin-top: 12px; }
+  .colunas-rel > div { flex: 1 1 200px; }
+  .colunas-rel h3 { font-size: 11px; letter-spacing: 1px; margin: 0 0 6px;
+                    color: var(--texto-fraco); font-weight: normal; }
+  .colunas-rel ul { list-style: none; margin: 0; padding: 0; font-size: 12px;
+                    font-family: Consolas, monospace; }
+  .colunas-rel .fora { color: var(--texto-fraco); }
+  .colunas-rel .ausente { color: var(--atencao); }
+
+  /* ---------- celular ---------- */
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    h1 { font-size: 18px; }
+
+    /* 16px evita o zoom automatico do iOS ao focar um campo */
+    input[type=text], input[type=number], input[type=file],
+    input[type=date], select, textarea {
+      width: 100%; font-size: 16px;
+    }
+    .linha > div, .campos > div { flex: 1 1 100%; min-width: 0; }
+    .linha, .campos { gap: 12px; }
+
+    /* alvo de toque confortavel */
+    .linha > button, .campos > button, form > button { width: 100%; }
+    button { min-height: 44px; }
+  }
+
+  @media (max-width: 700px) {
+    .painel { padding: 14px; }
+    .colunas-rel { gap: 14px; }
+    .colunas-rel > div { flex: 1 1 100%; }
+    .baixar { display: block; text-align: center; }
+    .diag li { flex-wrap: wrap; gap: 6px; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1>FILTRO <span>MIX</span></h1>
+<div class="sub">
+  Gera o Excel MIX formatado ·
+  <a href="{{ url_for('menu') }}">← menu</a>
+</div>
+
+<div class="funcoes">
+  {% for p in processadores %}
+  <a href="{{ url_for('filtro_mix', funcao=p.id) }}"
+     class="{{ 'ativo' if p.id == processador.id }}"
+     title="{{ p.descricao }}">{{ p.titulo }}</a>
+  {% endfor %}
+</div>
+
+<div class="sub" style="margin-top:-8px">{{ processador.descricao }}</div>
+{% if processador.observacao %}
+<div class="nota">{{ processador.observacao }}</div>
+{% endif %}
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+
+{% if arquivo_gerado %}
+<div class="painel">
+  <h2>ARQUIVO GERADO</h2>
+  <div>{{ arquivo_gerado }}</div>
+  <div class="info">Salvo em <b>{{ config.pasta_saida }}</b> na máquina que
+    roda o servidor.</div>
+  <a class="baixar" href="{{ url_for('baixar_processado', nome=arquivo_gerado) }}">
+    BAIXAR ARQUIVO
+  </a>
+  {% if relatorio_colunas %}
+  <div class="colunas-rel">
+    <div>
+      <h3>MANTIDAS ({{ relatorio_colunas.mantidas|length }})</h3>
+      <ul>{% for c in relatorio_colunas.mantidas %}<li>{{ c }}</li>{% endfor %}</ul>
+    </div>
+    <div>
+      <h3>DESCARTADAS ({{ relatorio_colunas.descartadas|length }})</h3>
+      <ul class="fora">
+        {% for c in relatorio_colunas.descartadas %}<li>{{ c }}</li>
+        {% else %}<li>nenhuma</li>{% endfor %}
+      </ul>
+    </div>
+    {% if relatorio_colunas.faltando %}
+    <div>
+      <h3>NA LISTA MAS AUSENTES NA PLANILHA</h3>
+      <ul class="ausente">
+        {% for c in relatorio_colunas.faltando %}<li>{{ c }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if info_email %}
+  <div class="info">
+    E-mail: <b>{{ info_email.assunto }}</b><br>
+    De: <b>{{ info_email.remetente }}</b> ({{ info_email.email_remetente }})<br>
+    Recebido: <b>{{ info_email.data }}</b> · Anexo:
+    <b>{{ info_email.nome_anexo }}</b>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="painel">
+  <h2>AUTOMÁTICO · ÚLTIMO E-MAIL DO OUTLOOK</h2>
+  {% if not processador.aceita_outlook %}
+  <div class="indisponivel">
+    {{ processador.titulo }} precisa de mais de um arquivo — a captura do
+    Outlook traz só um anexo. Use o envio manual abaixo.
+  </div>
+  {% elif com_disponivel %}
+  <form method="post"{% if processador.aceita_mona %} enctype="multipart/form-data"{% endif %}>
+    <input type="hidden" name="acao" value="automatico">
+    <input type="hidden" name="funcao" value="{{ processador.id }}">
+    <div class="linha">
+      <button type="submit" class="sec">BAIXAR E PROCESSAR</button>
+      <div class="info" style="margin:0">
+        Assunto contém <b>{{ config.assunto or '(qualquer)' }}</b> ·
+        remetente <b>{{ config.remetente or '(qualquer)' }}</b> ·
+        últimos <b>{{ config.dias_recentes }}</b> dias ·
+        anexo com <b>{{ config.palavras_chave|join(', ') or '(qualquer)' }}</b>
+      </div>
+    </div>
+    {% if processador.aceita_mona %}
+    <div class="linha" style="margin-top:14px; align-items:flex-start">
+      <div>
+        <label class="check" style="margin-bottom:0">
+          <input type="checkbox" id="usar_mona_auto" name="usar_mona"
+                 value="1" onchange="alternarMona('auto')">
+          <span>Cruzar com MONA</span>
+        </label>
+      </div>
+      <div id="campo_mona_auto" style="display:none; flex:1 1 260px">
+        <label>Planilha MONA</label>
+        <input type="file" name="arquivo_mona_extra" accept=".xlsx,.xls,.xlsm"
+               style="width:100%">
+        <div class="info" style="margin-top:6px">
+          Se a planilha não vier no formato de itens da Função 4 (só uma
+          lista de POPIDs), preencha o texto abaixo para marcar os
+          encontrados.
+        </div>
+        <label style="margin-top:8px">Texto para POPIDs encontrados (opcional)</label>
+        <input type="text" name="texto_mona" placeholder="ex.: 650/649" style="width:100%">
+      </div>
+    </div>
+    {% endif %}
+  </form>
+  {% else %}
+  <div class="indisponivel">
+    Indisponível: <code>pywin32</code> não encontrado. A captura do Outlook
+    precisa de Windows com o Outlook instalado. Use o modo manual abaixo.
+  </div>
+  {% endif %}
+</div>
+
+<div class="painel">
+  <h2>MANUAL · FORMATAR UM ARQUIVO</h2>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="acao" value="manual">
+    <input type="hidden" name="funcao" value="{{ processador.id }}">
+
+    <div class="campos-arquivo">
+      {% for campo in processador.arquivos %}
+      <div>
+        <label>
+          {{ campo.rotulo }}
+          {% if campo.opcional %}<span class="opcional">(opcional)</span>{% endif %}
+        </label>
+        <input type="file" name="{{ campo.nome }}" accept=".xlsx,.xls,.xlsm"
+               {{ 'required' if not campo.opcional }} style="width:100%">
+        {% if campo.ajuda %}<div class="info" style="margin-top:4px">{{ campo.ajuda }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    {% if processador.valores %}
+    <div class="campos-arquivo" style="margin-top:14px">
+      {% for campo in processador.valores %}
+      <div>
+        <label>{{ campo.rotulo }}</label>
+        <input type="{{ campo.tipo }}" name="{{ campo.nome }}"
+               value="{{ enviados.get(campo.nome) or campo.padrao }}"
+               {% if campo.placeholder %}placeholder="{{ campo.placeholder }}"{% endif %}
+               {% if campo.passo %}step="{{ campo.passo }}"{% endif %}
+               {% if campo.minimo %}min="{{ campo.minimo }}"{% endif %}
+               style="width:100%">
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if processador.aceita_mona %}
+    <div class="linha" style="margin-top:14px; align-items:flex-start">
+      <div>
+        <label class="check" style="margin-bottom:0">
+          <input type="checkbox" id="usar_mona_manual" name="usar_mona"
+                 value="1" onchange="alternarMona('manual')">
+          <span>Cruzar com MONA</span>
+        </label>
+      </div>
+      <div id="campo_mona_manual" style="display:none; flex:1 1 260px">
+        <label>Planilha MONA</label>
+        <input type="file" name="arquivo_mona_extra" accept=".xlsx,.xls,.xlsm"
+               style="width:100%">
+        <div class="info" style="margin-top:6px">
+          Se a planilha não vier no formato de itens da Função 4 (só uma
+          lista de POPIDs), preencha o texto abaixo para marcar os
+          encontrados.
+        </div>
+        <label style="margin-top:8px">Texto para POPIDs encontrados (opcional)</label>
+        <input type="text" name="texto_mona" placeholder="ex.: 650/649" style="width:100%">
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="margin-top:16px">
+      <button type="submit" class="leve">PROCESSAR</button>
+    </div>
+  </form>
+</div>
+
+<div class="painel">
+  <h2>CONFIGURAÇÕES DE FILTRO</h2>
+  <form method="post">
+    <input type="hidden" name="acao" value="salvar_config">
+    <input type="hidden" name="funcao" value="{{ processador.id }}">
+    <div class="linha">
+      <div>
+        <label>Assunto contém</label>
+        <input type="text" name="assunto" value="{{ config.assunto }}">
+      </div>
+      <div>
+        <label>Remetente</label>
+        <input type="text" name="remetente" value="{{ config.remetente }}">
+      </div>
+      <div>
+        <label>Dias recentes</label>
+        <input type="number" name="dias_recentes" min="1" max="90"
+               value="{{ config.dias_recentes }}">
+      </div>
+    </div>
+    <div class="linha" style="margin-top:14px">
+      <div>
+        <label>Palavras-chave no nome do anexo (separadas por vírgula)</label>
+        <input type="text" name="palavras_chave"
+               value="{{ config.palavras_chave|join(', ') }}">
+      </div>
+      <div>
+        <label>Pasta de saída</label>
+        <input type="text" name="pasta_saida" value="{{ config.pasta_saida }}">
+      </div>
+    </div>
+    <div class="linha" style="margin-top:14px; align-items:flex-start">
+      <div style="flex:1 1 100%">
+        <input type="hidden" name="colunas_enviadas" value="1">
+        <label>
+          Colunas de {{ processador.titulo }} — marque as que entram na
+          planilha gerada
+          <a href="#" onclick="marcarColunas(true); return false">todas</a> ·
+          <a href="#" onclick="marcarColunas(false); return false">nenhuma</a>
+          <span id="contagem-colunas"></span>
+        </label>
+        <div class="colunas-check">
+          {% for coluna in colunas_disponiveis %}
+          <label class="check">
+            <input type="checkbox" name="colunas" value="{{ coluna }}"
+                   {{ 'checked' if coluna in colunas_funcao }}>
+            <span>{{ coluna }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        <div class="info" style="margin-top:6px">
+          Cada função tem o seu conjunto: o layout (largura, fonte, cor) é
+          definido por coluna, então só aparecem as que a função conhece.
+        </div>
+      </div>
+      <button type="submit" style="margin-top:22px">SALVAR</button>
+    </div>
+  </form>
+</div>
+
+<div class="painel">
+  <h2>DIAGNÓSTICO</h2>
+  <form method="post">
+    <input type="hidden" name="acao" value="diagnostico">
+    <input type="hidden" name="funcao" value="{{ processador.id }}">
+    <button type="submit" class="leve">VERIFICAR OUTLOOK</button>
+  </form>
+
+  {% if diagnostico %}
+  <ul class="diag" style="margin-top:14px">
+    {% for item in diagnostico %}
+    <li>
+      <span class="marca {{ 'sim' if item.ok else 'nao' }}">
+        {{ '✓' if item.ok else '✗' }}
+      </span>
+      <span>{{ item.titulo }}</span>
+      <span class="detalhe">{{ item.detalhe }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>
+
+<script>
+  function alternarMona(escopo) {
+    var caixa = document.getElementById('usar_mona_' + escopo);
+    var campo = document.getElementById('campo_mona_' + escopo);
+    if (caixa && campo) {
+      campo.style.display = caixa.checked ? 'block' : 'none';
+    }
+  }
+
+  function caixasDeColuna() {
+    return Array.from(
+      document.querySelectorAll(".colunas-check input[type=checkbox]"));
+  }
+
+  function marcarColunas(marcar) {
+    caixasDeColuna().forEach(function (caixa) { caixa.checked = marcar; });
+    atualizarContagem();
+  }
+
+  // Sem contador, desmarcar tudo sem querer só aparece ao salvar.
+  function atualizarContagem() {
+    var caixas = caixasDeColuna();
+    var rotulo = document.getElementById("contagem-colunas");
+    if (!rotulo) { return; }
+    var marcadas = caixas.filter(function (c) { return c.checked; }).length;
+    rotulo.textContent = " · " + marcadas + " de " + caixas.length;
+    rotulo.style.color = marcadas ? "" : "var(--critico)";
+  }
+
+  caixasDeColuna().forEach(function (caixa) {
+    caixa.addEventListener("change", atualizarContagem);
+  });
+  atualizarContagem();
+</script>
+
+</body>
+</html>

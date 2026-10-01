@@ -1,0 +1,616 @@
+/* ============================================================
+   NEXUS · tema 2049
+   Blade Runner, nao synthwave: a cor esta na LUZ, nao nas
+   superficies. Cinza-marrom denso, ambar de vapor de sodio
+   contra azul frio, luz volumetrica, tipografia tecnica densa.
+   Substitui tema.css (nao empilha com ele).
+   ============================================================ */
+
+:root {
+  --fundo:        #14120F;
+  --abismo:       #080706;
+  --cartao:       #1C1815;
+  --cartao-topo:  #241F1A;
+  --campo:        #100E0C;
+  --linha:        #332C25;
+
+  --texto:        #EDE4D6;   /* branco sujo, nunca puro */
+  --texto-fraco:  #9C8F7D;
+
+  /* acento: vapor de sodio */
+  --ambar:        #F0A03C;
+  --ambar-fraco:  #8A6534;
+  --ciano:        #F0A03C;   /* aliases apontam pro ambar: um acento so */
+  --magenta:      #F0A03C;
+  --scania:       #F0A03C;
+
+  /* o frio: contraponto, nunca protagonista */
+  --frio:         #6E8BA0;
+  --roxo:         #6E8BA0;
+
+  --ok:           #7FA08C;
+  --atencao:      #F0A03C;
+  --critico:      #E0492F;
+  --vermelho-corp:#C20E17;
+
+  --chanfro:      0px;
+
+  --fonte-tec: "Bahnschrift", "DIN Alternate", "Segoe UI Variable Display",
+               "Segoe UI", system-ui, sans-serif;
+  --fonte-mono: "Cascadia Mono", "JetBrains Mono", Consolas,
+                "DejaVu Sans Mono", monospace;
+  --fonte-corpo: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+}
+
+/* ---------- atmosfera ---------- */
+
+html {
+  background: var(--fundo);
+  min-height: 100%;
+}
+
+body {
+  background: transparent !important;
+  color: var(--texto);
+  font-family: var(--fonte-corpo);
+  font-size: 15px;
+  position: relative;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* bruma: nevoa alta quente, chao frio, vinheta fechando as bordas.
+   Fixa, atras de tudo. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  background:
+    radial-gradient(90% 60% at 62% -8%, rgba(240,160,60,.16) 0%, rgba(240,160,60,0) 62%),
+    radial-gradient(70% 50% at 12% 108%, rgba(110,139,160,.12) 0%, rgba(110,139,160,0) 60%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,.55) 100%);
+}
+
+/* luz volumetrica: feixes diagonais atravessando a cena */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20vh -20vw;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    linear-gradient(104deg,
+      rgba(240,160,60,0) 30%, rgba(240,160,60,.055) 36%, rgba(240,160,60,.085) 39%,
+      rgba(240,160,60,0) 45%),
+    linear-gradient(104deg,
+      rgba(240,160,60,0) 56%, rgba(240,160,60,.045) 60%, rgba(240,160,60,0) 66%),
+    linear-gradient(104deg,
+      rgba(110,139,160,0) 74%, rgba(110,139,160,.05) 78%, rgba(110,139,160,0) 84%);
+  -webkit-mask-image: radial-gradient(120% 90% at 60% 0%, #000 0%, rgba(0,0,0,0) 78%);
+          mask-image: radial-gradient(120% 90% at 60% 0%, #000 0%, rgba(0,0,0,0) 78%);
+}
+
+/* ---------- tipografia: densa e tecnica ---------- */
+
+h1, h2, h3, .numero .val, .mini b, .barra-setor .rot,
+.numero .rot, th, .abrir, label {
+  font-family: var(--fonte-tec);
+}
+h1 {
+  font-weight: 400;
+  letter-spacing: .34em;
+  text-transform: uppercase;
+  color: var(--texto);
+  display: flex;
+  align-items: center;
+  gap: .5em;
+  flex-wrap: wrap;
+  text-shadow: 0 0 40px rgba(240,160,60,.25);
+}
+h1 span, h1 .wm span { color: var(--ambar) !important; }
+h1 .marca { height: 1.15em; width: auto; flex: 0 0 auto; }
+h2 { letter-spacing: .26em !important; text-transform: uppercase; font-weight: 400; }
+label, th, .numero .rot, .barra-setor .rot {
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  font-size: 10.5px;
+}
+code, .mono, td.mono, .membros span, .setor-entrada .cod, .barra-var .valor,
+table, .numero .val, .mini b {
+  font-family: var(--fonte-mono) !important;
+  font-variant-numeric: tabular-nums;
+}
+a { color: var(--ambar); }
+a:hover { color: #FFC072; }
+::selection { background: rgba(240,160,60,.3); }
+
+/* ---------- superficies: gastas, sem brilho ---------- */
+
+.painel, .numero, .setor-card, .cartao, a.ferramenta, .setor-entrada {
+  background: var(--cartao) !important;
+  border: 1px solid var(--linha) !important;
+  border-radius: 0 !important;
+  clip-path: none !important;
+  /* fio de luz no topo: a superficie pegando a iluminacao de cima */
+  box-shadow:
+    inset 0 1px 0 rgba(240,160,60,.10),
+    0 18px 50px rgba(0,0,0,.55);
+}
+
+.setor-card header, a.ferramenta .topo {
+  background: var(--cartao-topo) !important;
+  border-bottom: 1px solid var(--linha) !important;
+  position: relative;
+}
+
+a.ferramenta { transition: border-color .14s, background .14s; }
+a.ferramenta:hover {
+  border-color: var(--ambar-fraco) !important;
+  background: #221D18 !important;
+}
+a.ferramenta .abrir { color: var(--ambar) !important; letter-spacing: .24em; }
+
+/* titulo de secao: numero de registro, nao ornamento */
+.painel h2, .titulo-acoes h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--texto-fraco) !important;
+}
+.painel h2::before {
+  content: "";
+  width: 6px; height: 6px;
+  flex: 0 0 auto;
+  background: var(--ambar);
+  box-shadow: 0 0 10px rgba(240,160,60,.8);
+}
+
+/* ---------- controles ---------- */
+
+button, .btn, a.ajuda, a.destaque {
+  font-family: var(--fonte-tec);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+button {
+  background: transparent !important;
+  color: var(--ambar) !important;
+  border: 1px solid var(--ambar-fraco) !important;
+  border-radius: 0 !important;
+  clip-path: none !important;
+  min-height: 42px;
+  box-shadow: none;
+  transition: background .14s, border-color .14s, color .14s;
+}
+button:hover {
+  background: rgba(240,160,60,.12) !important;
+  border-color: var(--ambar) !important;
+  color: #FFC072 !important;
+}
+button:active { background: rgba(240,160,60,.22) !important; }
+button.sec {
+  color: var(--frio) !important;
+  border-color: rgba(110,139,160,.45) !important;
+}
+button.sec:hover {
+  background: rgba(110,139,160,.12) !important;
+  border-color: var(--frio) !important;
+  color: #9DB6C8 !important;
+}
+button:disabled, button[disabled] { opacity: .4; }
+
+input[type=text], input[type=number], input[type=date], input[type=file],
+select, textarea {
+  box-sizing: border-box;
+  background: var(--campo) !important;
+  color: var(--texto) !important;
+  border: 1px solid var(--linha) !important;
+  border-radius: 0 !important;
+  font-family: var(--fonte-mono);
+}
+input:hover, select:hover, textarea:hover { border-color: #4A4038 !important; }
+:focus-visible {
+  outline: 2px solid var(--ambar) !important;
+  outline-offset: 2px;
+  border-color: var(--ambar) !important;
+}
+
+a.ajuda { border-color: var(--linha) !important; color: var(--texto) !important; border-radius: 0 !important; }
+a.ajuda:hover { border-color: var(--ambar) !important; background: rgba(240,160,60,.10) !important; }
+
+.barra-setor a {
+  border-color: var(--linha) !important;
+  color: var(--texto-fraco) !important;
+  border-radius: 0 !important;
+}
+.barra-setor a:hover { border-color: var(--ambar-fraco) !important; color: var(--texto) !important; }
+.barra-setor a.ativo {
+  background: rgba(240,160,60,.12) !important;
+  border-color: var(--ambar) !important;
+  color: var(--ambar) !important;
+}
+
+.acoes-export a { border-color: var(--linha) !important; border-radius: 0 !important; }
+.acoes-export a:hover { color: var(--texto) !important; border-color: var(--ambar-fraco) !important; }
+.acoes-export a.destaque { border-color: var(--ambar-fraco) !important; color: var(--ambar) !important; }
+.acoes-export a.destaque:hover { background: rgba(240,160,60,.12) !important; }
+
+/* ---------- numeros ---------- */
+
+.numero .val {
+  font-size: 34px;
+  font-weight: 400;
+  letter-spacing: .01em;
+  color: var(--texto);
+}
+.numero .val.ok      { color: var(--ok) !important; }
+.numero .val.atencao { color: var(--atencao) !important; }
+.numero .val.critico { color: var(--critico) !important; }
+.mini b { font-size: 21px; font-weight: 400; }
+
+.barra-var .trilho {
+  background: var(--campo) !important;
+  box-shadow: inset 0 0 0 1px var(--linha);
+  border-radius: 0;
+}
+.barra-var .trilho i { border-radius: 0 !important; }
+.barra-var .trilho i.ok      { background: var(--ok) !important; }
+.barra-var .trilho i.atencao { background: var(--atencao) !important; }
+.barra-var .trilho i.critico { background: var(--critico) !important; }
+
+table th { color: var(--texto-fraco); border-bottom: 1px solid var(--linha); }
+td { border-top: 1px solid rgba(51,44,37,.7) !important; }
+tbody tr:hover td { background: rgba(240,160,60,.05); }
+
+/* ---------- estados ---------- */
+
+.ok-msg {
+  background: rgba(127,160,140,.08) !important;
+  border: 1px solid rgba(127,160,140,.4) !important;
+  color: #CFE0D6 !important;
+  border-radius: 0 !important;
+}
+.aviso-box, .alerta.alto {
+  background: rgba(240,160,60,.08) !important;
+  border: 1px solid rgba(240,160,60,.4) !important;
+  border-left: 4px solid var(--ambar) !important;
+  color: #F6DDB8 !important;
+  border-radius: 0 !important;
+}
+
+/* critico: a luz vermelha na bruma */
+.erro, .alerta.critico {
+  background: rgba(194,14,23,.16) !important;
+  border: 1px solid rgba(224,73,47,.6) !important;
+  color: #F7D9D2 !important;
+  border-radius: 0 !important;
+  border-left-width: 0 !important;
+  padding-left: 22px !important;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 34px rgba(224,73,47,.18);
+}
+.erro::before, .alerta.critico::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 10px;
+  background: repeating-linear-gradient(45deg,
+    var(--vermelho-corp) 0 7px, #2A0604 7px 14px);
+}
+
+.pastilha { border-radius: 0 !important; letter-spacing: .14em; text-transform: uppercase; }
+.pastilha.alta, .pastilha.critico { color: var(--critico) !important; }
+.pastilha.media, .pastilha.atencao { color: var(--atencao) !important; }
+.pastilha.limpo, .pastilha.ok { color: var(--ok) !important; }
+.erro-setor { color: var(--critico) !important; }
+
+@keyframes mm-pisca { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.pastilha.alta, .pastilha.critico { animation: mm-pisca 2.1s ease-in-out infinite; }
+.erro, .alerta.critico { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pastilha.alta, .pastilha.critico { animation: none; }
+}
+
+/* ---------- faixa andon ---------- */
+
+.faixa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px !important;
+  padding: 9px 10px;
+  background: var(--campo);
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--ambar);
+  margin-bottom: 14px !important;
+}
+.faixa .bloco {
+  width: 13px !important;
+  height: 22px !important;
+  border-radius: 0 !important;
+  clip-path: none !important;
+  background: #2A231D !important;
+  box-shadow: none !important;
+}
+.faixa .bloco.nenhum, .faixa .bloco.limpo { background: #2A231D !important; }
+.faixa .bloco.media {
+  background: var(--atencao) !important;
+  box-shadow: 0 0 12px rgba(240,160,60,.5) !important;
+}
+.faixa .bloco.alta {
+  background: var(--critico) !important;
+  box-shadow: 0 0 14px rgba(224,73,47,.7) !important;
+  animation: mm-pisca 2.1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .faixa .bloco.alta { animation: none; }
+}
+
+/* réguas embaixo da faixa: número da posição e horário estimado. Usam o
+   mesmo layout flex/gap/largura do .bloco pra alinhar coluna a coluna com
+   os quadrados de cima. */
+.faixa-eixo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px !important;
+  padding: 0 10px;
+}
+.faixa-eixo-numero { margin-top: 2px; }
+.faixa-eixo-horario { margin-top: 1px; margin-bottom: 14px !important; }
+.faixa-eixo .rotulo {
+  width: 13px !important;
+  flex: 0 0 13px;
+  text-align: center;
+  font-size: 8px;
+  line-height: 1.2;
+  color: var(--texto-fraco, #8A8478);
+  white-space: nowrap;
+  overflow: visible;
+  position: relative;
+}
+
+@media (min-width: 1700px) {
+  .faixa-eixo .rotulo { width: 16px !important; flex-basis: 16px; }
+}
+
+/* ---------- toque / andon ---------- */
+
+@media (max-width: 820px) {
+  body { font-size: 16px; }
+  button, .btn, a.ajuda { min-height: 48px; }
+  .barra-setor a { padding: 10px 16px !important; }
+  input[type=text], input[type=number], select, textarea { font-size: 16px !important; min-height: 46px; }
+  .numero .val { font-size: 30px; }
+  .faixa .bloco { height: 26px !important; }
+  h1 { letter-spacing: .22em; }
+}
+
+@media (min-width: 1700px) {
+  body { font-size: 17px; }
+  h1 { font-size: 40px !important; }
+  .numero .val { font-size: 46px; }
+  .mini b { font-size: 26px; }
+  table { font-size: 15px; }
+  .faixa .bloco { width: 16px !important; height: 28px !important; }
+}
+
+@media print {
+  html { background: #fff; }
+  body::before, body::after { display: none; }
+  body { color: #111; }
+}
+
+/* ============================================================
+   NEON NA BRUMA
+   Pouco e distante, como letreiro visto atraves da chuva:
+   rosa e azul eletrico difusos no fundo, e um fio aceso em
+   tres lugares que merecem — nada mais. O ambar continua
+   sendo o acento de trabalho.
+   ============================================================ */
+
+:root {
+  --neon-rosa: #FF5FA2;
+  --neon-azul: #4FC3F7;
+}
+
+/* letreiros distantes: manchas largas e sem forma, atras de tudo */
+body::before {
+  background:
+    radial-gradient(34vw 26vh at 84% 14%, rgba(255,95,162,.16) 0%, rgba(255,95,162,0) 70%),
+    radial-gradient(30vw 24vh at 10% 78%, rgba(79,195,247,.13) 0%, rgba(79,195,247,0) 70%),
+    radial-gradient(90% 60% at 62% -8%, rgba(240,160,60,.16) 0%, rgba(240,160,60,0) 62%),
+    radial-gradient(70% 50% at 12% 108%, rgba(110,139,160,.12) 0%, rgba(110,139,160,0) 60%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 38%, rgba(0,0,0,.55) 100%);
+}
+
+/* um dos feixes volumetricos passa a ser rosa */
+body::after {
+  background:
+    linear-gradient(104deg,
+      rgba(240,160,60,0) 30%, rgba(240,160,60,.055) 36%, rgba(240,160,60,.085) 39%,
+      rgba(240,160,60,0) 45%),
+    linear-gradient(104deg,
+      rgba(255,95,162,0) 56%, rgba(255,95,162,.06) 60%, rgba(255,95,162,0) 66%),
+    linear-gradient(104deg,
+      rgba(79,195,247,0) 74%, rgba(79,195,247,.055) 78%, rgba(79,195,247,0) 84%);
+}
+
+/* 1. o wordmark: tubo de neon, nao texto com sombra */
+h1 span, h1 .wm span {
+  color: #FFD9E8 !important;
+  text-shadow:
+    0 0 6px rgba(255,95,162,.95),
+    0 0 22px rgba(255,95,162,.65),
+    0 0 54px rgba(255,95,162,.35);
+}
+h1 .marca { filter: drop-shadow(0 0 12px rgba(255,95,162,.45)); }
+
+/* 2. o setor ativo: o unico controle aceso da barra */
+.barra-setor a.ativo {
+  border-color: var(--neon-azul) !important;
+  color: #DFF4FF !important;
+  background: rgba(79,195,247,.10) !important;
+  box-shadow: 0 0 16px rgba(79,195,247,.35), inset 0 0 12px rgba(79,195,247,.12);
+}
+
+/* 3. o ponto do titulo de secao: pequeno e vivo */
+.painel h2::before {
+  background: var(--neon-azul);
+  box-shadow: 0 0 10px rgba(79,195,247,.95), 0 0 24px rgba(79,195,247,.5);
+}
+
+/* a regua da faixa andon acompanha */
+.faixa { border-left-color: var(--neon-azul); }
+
+@media print {
+  h1 span, h1 .wm span { text-shadow: none; color: #111 !important; }
+}
+
+
+/* ============================================================
+   VARIANTE SPINNER (aplicada)
+   A cidade a noite, do alto: azul-gelo dominante, chuva, e o
+   ambar reduzido a poucas luzes de rua ao longe.
+   ============================================================ */
+
+:root {
+  --fundo:        #0C1016;
+  --abismo:       #05070A;
+  --cartao:       #131923;
+  --cartao-topo:  #1A2230;
+  --campo:        #090D13;
+  --linha:        #27313F;
+
+  --texto:        #E2ECF4;
+  --texto-fraco:  #7B8CA0;
+
+  --ambar:        #7FD4FF;
+  --ambar-fraco:  #3E6C87;
+  --ciano:        #7FD4FF;
+  --magenta:      #7FD4FF;
+  --scania:       #7FD4FF;
+
+  --frio:         #D99A4E;
+  --roxo:         #D99A4E;
+
+  --ok:           #6FB6A4;
+  --atencao:      #E8A951;
+  --critico:      #F04A55;
+
+  --neon-rosa:    #FF5FA2;
+  --neon-azul:    #7FD4FF;
+}
+
+body::before {
+  background:
+    radial-gradient(32vw 24vh at 88% 10%, rgba(255,95,162,.14) 0%, rgba(255,95,162,0) 70%),
+    radial-gradient(44vw 30vh at 16% 6%, rgba(127,212,255,.16) 0%, rgba(127,212,255,0) 70%),
+    radial-gradient(60vw 34vh at 50% 104%, rgba(217,154,78,.12) 0%, rgba(217,154,78,0) 66%),
+    radial-gradient(120% 100% at 50% 50%, rgba(0,0,0,0) 34%, rgba(0,0,0,.62) 100%);
+}
+body::after {
+  background:
+    linear-gradient(104deg, rgba(127,212,255,0) 28%, rgba(127,212,255,.07) 36%, rgba(127,212,255,.10) 39%, rgba(127,212,255,0) 46%),
+    linear-gradient(104deg, rgba(255,95,162,0) 56%, rgba(255,95,162,.055) 60%, rgba(255,95,162,0) 66%),
+    linear-gradient(104deg, rgba(217,154,78,0) 74%, rgba(217,154,78,.05) 78%, rgba(217,154,78,0) 84%);
+}
+
+h1 span, h1 .wm span {
+  color: #DCF3FF !important;
+  text-shadow:
+    0 0 6px rgba(127,212,255,.95),
+    0 0 22px rgba(127,212,255,.6),
+    0 0 54px rgba(127,212,255,.32);
+}
+h1 .marca { filter: drop-shadow(0 0 12px rgba(127,212,255,.5)); }
+
+.barra-setor a.ativo {
+  border-color: #FF5FA2 !important;
+  color: #FFDCEB !important;
+  background: rgba(255,95,162,.10) !important;
+  box-shadow: 0 0 16px rgba(255,95,162,.32), inset 0 0 12px rgba(255,95,162,.10);
+}
+.painel h2::before {
+  background: #FF5FA2;
+  box-shadow: 0 0 10px rgba(255,95,162,.95), 0 0 24px rgba(255,95,162,.45);
+}
+.faixa { border-left-color: #7FD4FF; }
+.faixa .bloco.nenhum, .faixa .bloco.limpo, .faixa .bloco { background: #1E2836 !important; }
+.faixa .bloco.media { background: var(--atencao) !important; box-shadow: 0 0 12px rgba(232,169,81,.45) !important; }
+.faixa .bloco.alta { background: var(--critico) !important; box-shadow: 0 0 14px rgba(240,74,85,.7) !important; }
+
+a.ferramenta:hover { background: #18202C !important; }
+
+/* ============================================================
+   GANHO ALTO
+   A mesma cena, mais funda: letreiros maiores, sodio pingando
+   nas superficies, tubo de neon mais largo no wordmark. O que
+   e alerta continua sendo a coisa mais brilhante da tela.
+   ============================================================ */
+
+/* letreiros: manchas maiores e mais saturadas */
+body::before {
+  background:
+    radial-gradient(46vw 34vh at 88% 8%, rgba(255,95,162,.26) 0%, rgba(255,95,162,0) 70%),
+    radial-gradient(52vw 36vh at 6% 12%, rgba(127,212,255,.22) 0%, rgba(127,212,255,0) 70%),
+    radial-gradient(44vw 30vh at 18% 82%, rgba(127,212,255,.16) 0%, rgba(127,212,255,0) 70%),
+    radial-gradient(64vw 36vh at 54% 106%, rgba(217,154,78,.18) 0%, rgba(217,154,78,0) 66%),
+    radial-gradient(120% 100% at 50% 46%, rgba(0,0,0,0) 30%, rgba(0,0,0,.7) 100%);
+}
+
+/* feixes volumetricos mais definidos */
+body::after {
+  background:
+    linear-gradient(104deg, rgba(127,212,255,0) 26%, rgba(127,212,255,.11) 35%,
+      rgba(127,212,255,.15) 39%, rgba(127,212,255,0) 47%),
+    linear-gradient(104deg, rgba(255,95,162,0) 54%, rgba(255,95,162,.09) 60%,
+      rgba(255,95,162,0) 67%),
+    linear-gradient(104deg, rgba(217,154,78,0) 72%, rgba(217,154,78,.075) 78%,
+      rgba(217,154,78,0) 85%);
+}
+
+/* superficies: fio de luz mais forte no topo e sombra mais funda */
+.painel, .numero, .setor-card, .cartao, a.ferramenta, .setor-entrada {
+  background-color: rgba(19,25,35,.92) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(127,212,255,.22),
+    inset 0 -1px 0 rgba(0,0,0,.5),
+    0 24px 64px rgba(0,0,0,.66);
+}
+
+/* wordmark: tubo mais largo */
+h1 span, h1 .wm span {
+  text-shadow:
+    0 0 4px rgba(220,243,255,.85),
+    0 0 12px rgba(127,212,255,.95),
+    0 0 34px rgba(127,212,255,.7),
+    0 0 78px rgba(127,212,255,.4);
+}
+h1 .marca { filter: drop-shadow(0 0 18px rgba(127,212,255,.65)); }
+
+/* setor ativo e ponto de secao: acesos de verdade */
+.barra-setor a.ativo {
+  box-shadow: 0 0 24px rgba(255,95,162,.45), inset 0 0 16px rgba(255,95,162,.16);
+}
+.painel h2::before {
+  box-shadow: 0 0 14px rgba(255,95,162,1), 0 0 34px rgba(255,95,162,.6);
+}
+
+/* botoes: contorno pegando luz */
+button:hover {
+  box-shadow: 0 0 26px rgba(127,212,255,.34), inset 0 0 18px rgba(127,212,255,.12);
+}
+
+/* numeros de estado: a luz acompanha a severidade */
+.numero .val.atencao { text-shadow: 0 0 26px rgba(232,169,81,.5); }
+.numero .val.critico { text-shadow: 0 0 30px rgba(240,74,85,.65); }
+
+/* faixa andon: o trilho tambem recebe luz */
+.faixa { box-shadow: inset 0 0 22px rgba(127,212,255,.1); }
+
+@media print {
+  .painel, .numero, .setor-card, .cartao, a.ferramenta, .setor-entrada { box-shadow: none !important; }
+  h1 span, h1 .wm span, h1 .marca { text-shadow: none !important; filter: none !important; }
+}

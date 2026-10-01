@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXUS-6 · Análise de CPM</title>
+<style>
+  :root {
+    --fundo: #0F1642;
+    --cartao: #182160;
+    --cartao-topo: #1E2A75;
+    --linha: #2C3890;
+    --texto: #F2F2F2;
+    --texto-fraco: #A9B0D8;
+    --scania: #C20E17;
+    --ok: #4CC76A;
+    --atencao: #F2C14E;
+    --critico: #FF5C61;
+    --branco: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 24px 32px;
+    background: var(--fundo); color: var(--texto);
+    font: 14px/1.5 Arial, Helvetica, sans-serif;
+  }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+
+  form { background: var(--cartao); border: 1px solid var(--linha);
+         border-radius: 10px; padding: 18px; margin-bottom: 22px; }
+  .campos { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  .dica-campo { font-size: 10px; color: var(--texto-fraco); margin-top: 3px; max-width: 140px; }
+  label.check { display: flex; align-items: center; gap: 8px; margin: 0;
+               font-size: 13px; color: var(--texto); cursor: pointer; }
+  label.check input[type=checkbox] { width: auto; margin: 0; }
+  .info { font-size: 11px; color: var(--texto-fraco); }
+  .presenteismo-lista { display: flex; flex-wrap: wrap; gap: 10px; width: 100%;
+                        margin-top: 4px; }
+  .presenteismo-item { display: flex; align-items: center; gap: 6px;
+                       background: var(--cartao-topo); border: 1px solid var(--linha);
+                       border-radius: 6px; padding: 6px 10px; font-size: 12px; }
+  .presenteismo-item .presenteismo-num { color: var(--texto-fraco);
+                       font-weight: bold; min-width: 14px; }
+  .presenteismo-item input[type=time] { width: 100px; }
+  .painel-presenteismo { margin: 18px 0; padding: 14px 16px;
+                         background: var(--cartao-topo); border: 1px solid var(--linha);
+                         border-radius: 8px; }
+  .tabela-presenteismo { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tabela-presenteismo th { text-align: left; font-size: 10px; letter-spacing: 1px;
+                            font-weight: normal; color: var(--texto-fraco);
+                            padding-bottom: 6px; }
+  .tabela-presenteismo td { padding: 7px 12px 7px 0; border-top: 1px solid var(--linha); }
+  .tabela-presenteismo td.mono { font-family: Consolas, monospace; }
+  input[type=text], input[type=time], input[type=file] {
+    background: #0C1136; color: var(--texto);
+    border: 1px solid var(--linha); border-radius: 6px;
+    padding: 8px 10px; font-size: 14px; width: 130px;
+  }
+  input[type=file] { width: 320px; padding: 6px; }
+  button {
+    background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+    padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer;
+  }
+  button:hover { background: #E00014; }
+
+  .erro { background: #4A1220; border: 1px solid var(--critico);
+          color: #FFD3D5; padding: 10px 14px; border-radius: 6px;
+          margin-bottom: 18px; }
+  .resumo { color: var(--texto-fraco); margin-bottom: 14px; font-size: 13px; }
+
+  /* --- uma coluna por variante --- */
+  .colunas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+    align-items: start;
+  }
+  .variante {
+    background: var(--cartao); border: 1px solid var(--linha);
+    border-radius: 10px;
+    /* nada de overflow:hidden aqui — recortava a caixinha de POPID.
+       Os cantos arredondados ficam no header e no footer. */
+  }
+  .variante header {
+    background: var(--cartao-topo); padding: 12px 14px;
+    border-top: 3px solid var(--scania);
+    border-radius: 9px 9px 0 0;
+  }
+  .variante footer { border-radius: 0 0 9px 9px; }
+  .variante header .nome { font-size: 12px; letter-spacing: 1px; }
+  .variante header .total { font-size: 26px; font-weight: bold; line-height: 1.2; }
+  .variante header .rot { font-size: 11px; color: var(--texto-fraco); }
+
+  .tarefas { padding: 12px 14px; }
+  .tarefa { margin-bottom: 12px; }
+  .tarefa .topo { display: flex; justify-content: space-between; gap: 8px; }
+  .tarefa .nome { font-size: 13px; }
+  .tarefa .qtd { font-size: 20px; font-weight: bold; color: var(--branco); }
+  .tarefa .pct { font-size: 17px; font-weight: bold; }
+  .barra { height: 4px; background: var(--linha); border-radius: 2px;
+           margin-top: 4px; overflow: hidden; }
+  .barra i { display: block; height: 100%; }
+
+  .ok   { color: var(--ok); }      .barra .ok   { background: var(--ok); }
+  .atencao { color: var(--atencao); } .barra .atencao { background: var(--atencao); }
+  .critico { color: var(--critico); } .barra .critico { background: var(--critico); }
+
+  .variante footer {
+    border-top: 1px solid var(--linha); padding: 10px 14px;
+    font-size: 11px; color: var(--texto-fraco);
+  }
+  .variante footer div { display: flex; justify-content: space-between; }
+
+  h2 { font-size: 13px; margin: 26px 0 10px; letter-spacing: 1px; }
+  .mix { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+         gap: 8px; }
+  .mix div { background: var(--cartao); border: 1px solid var(--linha);
+             border-radius: 8px; padding: 8px 10px; }
+  .mix .rot { font-size: 11px; color: var(--texto-fraco); }
+  .mix .val { font-size: 18px; font-weight: bold; }
+  .avisos { color: var(--atencao); font-size: 12px; margin-top: 14px; }
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin-bottom: 16px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+
+
+  /* ---- número clicável com POPID/SEQ ---- */
+  .det { position: relative; display: inline-block; z-index: 0; }
+  .det[open] { z-index: 60; }
+  .det > summary { cursor: pointer; list-style: none; user-select: none;
+                   border-bottom: 1px dotted var(--texto-fraco); }
+  .det > summary::-webkit-details-marker { display: none; }
+  .det > summary:hover { border-bottom-color: var(--scania); }
+  .det[open] > summary { color: var(--scania); }
+  .det-caixa { position: absolute; z-index: 60; top: 100%; left: 0;
+               min-width: 190px; max-height: 300px; overflow: auto;
+               background: #0C1136; border: 1px solid var(--scania);
+               border-radius: 8px; padding: 10px 12px;
+               box-shadow: 0 8px 22px rgba(0,0,0,.55); }
+  .det-topo { display: flex; justify-content: space-between; gap: 12px;
+              font-size: 11px; color: var(--texto-fraco);
+              border-bottom: 1px solid var(--linha); padding-bottom: 6px;
+              margin-bottom: 6px; }
+  .det-topo b { color: var(--texto); font-weight: normal; }
+  .det-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .det-tab th { text-align: left; font-weight: normal; color: var(--texto-fraco);
+                font-size: 10px; padding-bottom: 3px; }
+  .det-tab td { padding: 2px 10px 2px 0; font-family: Consolas, monospace; }
+  .det.esquerda > .det-caixa { left: auto; right: 0; }
+  .det.acima > .det-caixa { top: auto; bottom: 100%; }
+  .det-copiar { margin-top: 8px; display: flex; gap: 6px; align-items: center; }
+  .det-copiar textarea { position: absolute; left: -9999px; }
+  .det-copiar button { background: var(--linha); font-size: 10px;
+                       padding: 4px 10px; border-radius: 5px; }
+  .det-copiar button:hover { background: var(--scania); }
+
+  /* ---- bloco de exportação ---- */
+  .exportar { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 22px; }
+  .exp-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+              margin-bottom: 10px; }
+  .exp-topo b { font-size: 12px; letter-spacing: 1px; }
+  .exp-abas { display: flex; gap: 4px; }
+  .exp-acoes { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  button.aba { background: transparent; color: var(--texto-fraco);
+               border: 1px solid var(--linha); border-radius: 6px;
+               padding: 5px 12px; font-size: 12px; font-weight: normal; }
+  button.aba.ativa { background: var(--linha); color: var(--texto); }
+  button.copiar { background: #2E8B57; padding: 7px 18px; font-size: 12px; }
+  button.copiar:hover { background: #228B22; }
+  a.baixar { color: var(--texto); font-size: 12px; text-decoration: none;
+             border: 1px solid var(--scania); border-radius: 6px;
+             padding: 7px 14px; font-weight: bold; letter-spacing: .5px; }
+  a.baixar:hover { background: var(--scania); }
+  .exportar textarea { width: 100%; height: 190px; resize: vertical;
+                       background: #0C1136; color: var(--texto);
+                       border: 1px solid var(--linha); border-radius: 6px;
+                       padding: 10px; font: 12px/1.45 Consolas, monospace;
+                       white-space: pre; }
+  .exp-dica { font-size: 11px; color: var(--texto-fraco); margin-top: 6px; }
+
+
+  .captura { background: var(--cartao); border: 1px solid var(--linha);
+             border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+  .captura h3 { margin: 0 0 12px; font-size: 12px; letter-spacing: 1px;
+                color: var(--texto-fraco); font-weight: normal; }
+  .captura .linha { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+  button.sec { background: #2E8B57; }
+  button.sec:hover { background: #228B22; }
+  button.leve { background: #1E3A8A; }
+  button.leve:hover { background: #1D4ED8; }
+  input[type=number], input[type=date] {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 150px;
+  }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; }
+  .aviso-box { background: #3D3211; border: 1px solid var(--atencao);
+               color: #F7E7BB; padding: 10px 14px; border-radius: 6px;
+               margin-bottom: 14px; font-size: 13px; }
+  .anexos { list-style: none; padding: 0; margin: 12px 0 0; }
+  .anexos li { font-size: 12px; color: var(--texto-fraco);
+               padding: 6px 0; border-top: 1px solid var(--linha); }
+  .anexos b { color: var(--texto); font-weight: normal; }
+  .auto { font-size: 12px; color: var(--texto-fraco); display: flex;
+          align-items: center; gap: 6px; }
+  .indisponivel { color: var(--atencao); font-size: 12px; }
+
+
+  /* ---- alertas de absenteísmo ---- */
+  .alertas { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .alerta { border-radius: 8px; padding: 12px 16px; display: flex;
+            flex-wrap: wrap; gap: 10px; align-items: baseline; }
+  .alerta .texto { font-size: 15px; font-weight: bold; letter-spacing: .5px; }
+  .alerta .detalhe { font-size: 12px; opacity: .85; }
+  .alerta.critico { background: #4A1220; border: 1px solid var(--critico);
+                    color: #FFD3D5; }
+  .alerta.alto { background: #3D3211; border: 1px solid var(--atencao);
+                 color: #F7E7BB; }
+  .postos { color: var(--texto-fraco); font-size: 12px; margin-bottom: 14px; }
+  .postos b { color: var(--texto); font-weight: normal; }
+  .origem { font-size: 9px; color: var(--texto-fraco); border: 1px solid var(--linha);
+            border-radius: 8px; padding: 0 5px; margin-left: 6px; }
+
+  /* ---- painel de gargalos ---- */
+  .gargalos { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 22px; }
+  .garg-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+               margin-bottom: 12px; }
+  .garg-topo b { font-size: 12px; letter-spacing: 1px; }
+  .garg-resumo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .garg-link { margin-left: auto; color: var(--texto-fraco); font-size: 12px; }
+  .garg-fraco { color: var(--texto-fraco); font-size: 12px; }
+  .pastilha { font-size: 11px; border-radius: 10px; padding: 2px 9px;
+              border: 1px solid currentColor; }
+  .pastilha.alta { color: var(--critico); }
+  .pastilha.media { color: var(--atencao); }
+  .pastilha.limpo { color: var(--ok); }
+
+  .faixa { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 14px; }
+  .faixa .bloco { width: 11px; height: 16px; border-radius: 2px;
+                  background: var(--linha); }
+  .faixa .bloco.alta { background: var(--critico); }
+  .faixa .bloco.media { background: var(--atencao); }
+  .faixa .bloco.nenhum { background: #263079; }
+
+  .garg-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .garg-tab th { text-align: left; font-weight: normal; font-size: 10px;
+                 letter-spacing: 1px; color: var(--texto-fraco);
+                 padding-bottom: 6px; }
+  .garg-tab td { padding: 8px 12px 8px 0; border-top: 1px solid var(--linha);
+                 vertical-align: top; }
+  .garg-tab .mono { font-family: Consolas, monospace; font-size: 12px; }
+  .garg-membros span { display: inline-block; margin: 0 8px 3px 0; }
+  .garg-membros i { color: var(--texto-fraco); font-style: normal; }
+
+  @media (max-width: 700px) {
+    .garg-link { margin-left: 0; }
+    .garg-tab, .garg-tab tbody, .garg-tab tr, .garg-tab td { display: block;
+                width: 100%; }
+    .garg-tab th { display: none; }
+    .garg-tab tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    .garg-tab td { border-top: 0; padding: 3px 0; }
+  }
+
+  /* ---------- celular ---------- */
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    h1 { font-size: 18px; }
+
+    /* 16px evita o zoom automatico do iOS ao focar um campo */
+    input[type=text], input[type=number], input[type=file],
+    input[type=date], select, textarea {
+      width: 100%; font-size: 16px;
+    }
+    .linha > div, .campos > div { flex: 1 1 100%; min-width: 0; }
+    .linha, .campos { gap: 12px; }
+
+    /* alvo de toque confortavel */
+    .linha > button, .campos > button, form > button { width: 100%; }
+    button { min-height: 44px; }
+  }
+
+  @media (max-width: 700px) {
+    .colunas { grid-template-columns: 1fr; }
+    .mix { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+    .captura .linha { gap: 12px; }
+    .exportar textarea { height: 150px; }
+    .exp-acoes { margin-left: 0; width: 100%; }
+    .exp-acoes button, .exp-acoes a { flex: 1 1 auto; text-align: center; }
+    button.aba, button.copiar { min-height: 38px; }
+
+    /* a caixinha de POPID nao pode passar da largura da tela */
+    .det-caixa { max-width: calc(100vw - 44px); }
+    .det.esquerda > .det-caixa { left: auto; right: 0; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1><img class="marca" src="{{ url_for('static', filename='nexus.svg') }}" alt=""><span class="wm">NEXUS<span>-6</span></span> · Análise de CPM</h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}" style="color:#7FD4FF">← menu</a> ·
+  <a href="{{ url_for('ajuda') }}" style="color:#7FD4FF">como usar</a> ·
+  Carga de trabalho por variante a partir do POPID de referência ·
+  <a href="{{ url_for('tarefas', token=token) }}" style="color:#7FD4FF">
+    editar tarefas das variantes
+  </a> ·
+  <a href="{{ url_for('gargalos_tela', token=token, popid=popid, producao=producao) }}"
+     style="color:#7FD4FF">só os gargalos</a>
+</div>
+
+<div class="barra-setor">
+  <span class="rot">SETOR</span>
+  {% for s in setores %}
+  <a href="{{ url_for(request.endpoint, setor=s.id) }}"
+     class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+  {% endfor %}
+  <a href="{{ url_for('tela_setores') }}" title="Cadastrar setores">+</a>
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+{% if avisos_planilha %}
+<div class="aviso-box">
+  {% for aviso in avisos_planilha %}⚠ {{ aviso }}<br>{% endfor %}
+</div>
+{% endif %}
+
+<form method="post" class="captura" id="form-outlook" enctype="multipart/form-data">
+  <h3>CAPTURA AUTOMÁTICA · OUTLOOK</h3>
+  <input type="hidden" name="acao" id="acao-outlook" value="outlook_recentes">
+  <input type="hidden" name="popid" id="hidden-popid" value="{{ popid }}">
+  <input type="hidden" name="producao" id="hidden-producao" value="{{ producao }}">
+  <input type="hidden" name="absenteismo" id="hidden-absenteismo" value="{{ faltas }}">
+  <input type="hidden" name="takt" id="hidden-takt" value="{{ takt }}">
+  <input type="hidden" name="inicio_turno" id="hidden-inicio-turno" value="{{ inicio_turno }}">
+  <input type="hidden" name="fim_turno" id="hidden-fim-turno" value="{{ fim_turno }}">
+
+  {% if com_disponivel %}
+  <div class="linha">
+    <div>
+      <label>Últimos N dias</label>
+      <input type="number" name="dias" value="{{ dias }}" min="1" max="90">
+    </div>
+    <button type="submit" class="sec"
+            onclick="document.getElementById('acao-outlook').value='outlook_recentes'">
+      BAIXAR RECENTES
+    </button>
+
+    <div>
+      <label>De</label>
+      <input type="date" name="data_inicio" value="{{ data_inicio }}">
+    </div>
+    <div>
+      <label>Até</label>
+      <input type="date" name="data_fim" value="{{ data_fim }}">
+    </div>
+    <button type="submit" class="leve"
+            onclick="document.getElementById('acao-outlook').value='outlook_periodo'">
+      BAIXAR POR PERÍODO
+    </button>
+
+    <label class="auto">
+      <input type="checkbox" id="auto-buscar"> buscar ao abrir a página
+    </label>
+  </div>
+
+  <div class="linha" style="margin-top:10px; align-items:flex-start">
+    <div>
+      <label class="check" style="margin-bottom:0">
+        <input type="checkbox" id="usar_mona_analise_auto" name="usar_mona"
+               value="1" onchange="alternarMona('analise_auto')">
+        <span>Cruzar com MONA</span>
+      </label>
+    </div>
+    <div id="campo_mona_analise_auto" style="display:none; flex:1 1 260px">
+      <label>Planilha MONA</label>
+      <input type="file" name="arquivo_mona_extra" accept=".xlsx,.xls,.xlsm"
+             style="width:100%">
+      <div class="info" style="margin-top:6px">
+        Se a planilha não vier no formato de itens da Função 4 (só uma
+        lista de POPIDs), escolha abaixo o que marcar nos POPIDs encontrados.
+      </div>
+      <label style="margin-top:8px">Valor a marcar nos POPIDs encontrados</label>
+      <select name="texto_mona_fixo" id="texto_mona_fixo_analise_auto"
+              onchange="alternarTextoMonaOutro('analise_auto')" style="width:100%">
+        {% for tag in tags_mona_fixas %}
+        <option value="{{ tag }}">{{ tag }}</option>
+        {% endfor %}
+        <option value="__outro__">Outro (digitar)</option>
+      </select>
+      <input type="text" name="texto_mona_outro" id="texto_mona_outro_analise_auto"
+             placeholder="digite o texto" style="display:none; margin-top:6px; width:100%">
+    </div>
+  </div>
+  {% else %}
+  <div class="indisponivel">
+    Download automático indisponível: <code>pywin32</code> não encontrado.
+    Este recurso precisa de Windows com o Outlook instalado. Use o envio
+    manual das planilhas abaixo.
+  </div>
+  {% endif %}
+
+  {% if arquivos_outlook %}
+  <ul class="anexos">
+    {% for arquivo in arquivos_outlook %}
+    <li><b>{{ arquivo.nome }}</b> · {{ arquivo.data }} · {{ arquivo.assunto[:60] }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</form>
+
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="token" value="{{ token }}">
+  <div class="campos">
+    <div>
+      <label>Planilhas (selecione as duas){% if info_dados %} · {{ info_dados }}{% endif %}</label>
+      <input type="file" name="planilhas" accept=".xlsx,.xlsm" multiple>
+      {% if mona_arquivo %}
+      <div class="info" style="margin-top:6px">
+        MONA carregada: <b>{{ mona_arquivo }}</b>
+      </div>
+      {% endif %}
+    </div>
+    <div>
+      <label>POPID</label>
+      <input type="text" name="popid" id="campo-popid" value="{{ popid }}" autofocus>
+    </div>
+    <div>
+      <label>Produção do dia</label>
+      <input type="text" name="producao" id="campo-producao" value="{{ producao }}">
+    </div>
+    <div>
+      <label>Absenteísmo (pessoas)</label>
+      <input type="text" name="absenteismo" id="campo-absenteismo" value="{{ faltas }}" style="width:120px">
+      <div class="dica-campo"></div>
+    </div>
+    <div>
+      <label>
+        <input type="checkbox" name="presenteismo" value="sim"
+               id="presenteismo-check" onchange="alternarPresenteismo()"
+               {{ 'checked' if presenteismo_ativo }} style="width:auto; margin-right:5px">
+        Presenteísmo
+      </label>
+      <input type="text" id="presenteismo-qtd" name="presenteismo_qtd"
+             value="{{ presenteismo_qtd or '' }}" placeholder="quantas pessoas"
+             style="width:120px; {{ '' if presenteismo_ativo else 'display:none' }}"
+             oninput="gerarCamposPresenteismo()">
+      <div class="dica-campo" id="presenteismo-dica"
+           style="{{ '' if presenteismo_ativo else 'display:none' }}">
+       
+      </div>
+    </div>
+    <div>
+      <label>Takt (s/veículo)</label>
+      <input type="text" name="takt" id="campo-takt" value="{{ takt }}" style="width:110px">
+    </div>
+    <div>
+      <label>Início do turno</label>
+      <input type="time" name="inicio_turno" id="campo-inicio-turno" value="{{ inicio_turno }}"
+             style="width:120px">
+    </div>
+    <div>
+      <label>Fim do turno</label>
+      <input type="time" name="fim_turno" id="campo-fim-turno" value="{{ fim_turno }}"
+             style="width:120px">
+    </div>
+    <div id="presenteismo-campos" class="presenteismo-lista"
+         style="{{ '' if presenteismo_ativo else 'display:none' }}">
+      {% for janela in presenteismo_janelas %}
+      <div class="presenteismo-item">
+        <span class="presenteismo-num">{{ loop.index }}</span>
+        <input type="time" name="presenteismo_inicio_{{ loop.index }}"
+               value="{{ janela.inicio }}">
+        <span>até</span>
+        <input type="time" name="presenteismo_fim_{{ loop.index }}"
+               value="{{ janela.fim }}">
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="campo_mona_analise_manual_bloco" style="flex:1 1 100%">
+      <label class="check" style="margin-bottom:0">
+        <input type="checkbox" id="usar_mona_analise_manual" name="usar_mona"
+               value="1" onchange="alternarMona('analise_manual')">
+        <span>Cruzar com MONA</span>
+      </label>
+      <div id="campo_mona_analise_manual" style="display:none; margin-top:8px; max-width:340px">
+        <label>Planilha MONA</label>
+        <input type="file" name="arquivo_mona_extra" accept=".xlsx,.xls,.xlsm"
+               style="width:100%">
+        <div class="info" style="margin-top:6px">
+          Se a planilha não vier no formato de itens da Função 4 (só uma
+          lista de POPIDs), escolha abaixo o que marcar nos POPIDs encontrados.
+        </div>
+        <label style="margin-top:8px">Valor a marcar nos POPIDs encontrados</label>
+        <select name="texto_mona_fixo" id="texto_mona_fixo_analise_manual"
+                onchange="alternarTextoMonaOutro('analise_manual')" style="width:100%">
+          {% for tag in tags_mona_fixas %}
+          <option value="{{ tag }}">{{ tag }}</option>
+          {% endfor %}
+          <option value="__outro__">Outro (digitar)</option>
+        </select>
+        <input type="text" name="texto_mona_outro" id="texto_mona_outro_analise_manual"
+               placeholder="digite o texto" style="display:none; margin-top:6px; width:100%">
+      </div>
+    </div>
+
+    <button type="submit">ANALISAR</button>
+  </div>
+</form>
+
+<script>
+  function alternarMona(escopo) {
+    var caixa = document.getElementById('usar_mona_' + escopo);
+    var campo = document.getElementById('campo_mona_' + escopo);
+    if (caixa && campo) {
+      campo.style.display = caixa.checked ? 'block' : 'none';
+    }
+  }
+
+  function alternarTextoMonaOutro(escopo) {
+    var select = document.getElementById('texto_mona_fixo_' + escopo);
+    var campo = document.getElementById('texto_mona_outro_' + escopo);
+    if (select && campo) {
+      campo.style.display = select.value === '__outro__' ? 'block' : 'none';
+    }
+  }
+
+  // Os campos POPID/Produção/etc. ficam no formulario manual, mas os botoes
+  // de baixar do Outlook estao num <form> separado — sem isso, o Outlook
+  // sempre enviava esses campos vazios (ou com o valor da ultima pagina),
+  // mesmo que o usuario ja tivesse preenchido tudo antes de clicar em baixar.
+  (function () {
+    var formOutlook = document.getElementById('form-outlook');
+    if (!formOutlook) return;
+    var pares = [
+      ['campo-popid', 'hidden-popid'],
+      ['campo-producao', 'hidden-producao'],
+      ['campo-absenteismo', 'hidden-absenteismo'],
+      ['campo-takt', 'hidden-takt'],
+      ['campo-inicio-turno', 'hidden-inicio-turno'],
+      ['campo-fim-turno', 'hidden-fim-turno'],
+    ];
+    formOutlook.addEventListener('submit', function () {
+      pares.forEach(function (par) {
+        var origem = document.getElementById(par[0]);
+        var destino = document.getElementById(par[1]);
+        if (origem && destino) { destino.value = origem.value; }
+      });
+    });
+  })();
+
+  function alternarPresenteismo() {
+    var ligado = document.getElementById("presenteismo-check").checked;
+    document.getElementById("presenteismo-qtd").style.display = ligado ? "" : "none";
+    document.getElementById("presenteismo-dica").style.display = ligado ? "" : "none";
+    if (!ligado) {
+      document.getElementById("presenteismo-campos").style.display = "none";
+      document.getElementById("presenteismo-campos").innerHTML = "";
+    } else {
+      gerarCamposPresenteismo();
+    }
+  }
+
+  function gerarCamposPresenteismo() {
+    var quantidade = parseInt(document.getElementById("presenteismo-qtd").value, 10);
+    var lista = document.getElementById("presenteismo-campos");
+    if (!quantidade || quantidade < 1) {
+      lista.style.display = "none";
+      lista.innerHTML = "";
+      return;
+    }
+    quantidade = Math.min(quantidade, 30);  // sanidade — nao trava a tela
+
+    // Preserva o que ja foi digitado ao aumentar a quantidade.
+    var existentes = lista.querySelectorAll(".presenteismo-item");
+    var valores = [];
+    existentes.forEach(function (item) {
+      var campos = item.querySelectorAll("input[type=time]");
+      valores.push([campos[0].value, campos[1].value]);
+    });
+
+    lista.innerHTML = "";
+    for (var i = 1; i <= quantidade; i++) {
+      var anterior = valores[i - 1] || ["", ""];
+      var item = document.createElement("div");
+      item.className = "presenteismo-item";
+      item.innerHTML =
+        '<span class="presenteismo-num">' + i + '</span>' +
+        '<input type="time" name="presenteismo_inicio_' + i + '" value="' + anterior[0] + '">' +
+        '<span>até</span>' +
+        '<input type="time" name="presenteismo_fim_' + i + '" value="' + anterior[1] + '">';
+      lista.appendChild(item);
+    }
+    lista.style.display = "flex";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("presenteismo-check").checked) {
+      gerarCamposPresenteismo();
+      // o loop Jinja acima ja preencheu os campos na primeira carga —
+      // gerarCamposPresenteismo() so criaria campos vazios por cima. So
+      // regera quando ainda nao ha nenhum item no HTML (ex.: o usuario
+      // mudou a quantidade e a pagina recarregou sem essa marcacao).
+      var jaTemCampos = document.querySelectorAll("#presenteismo-campos .presenteismo-item").length > 0;
+      if (!jaTemCampos) { gerarCamposPresenteismo(); }
+    }
+  });
+</script>
+
+{% if resultado %}
+  <div class="resumo">
+    POPID {{ resultado.popid }} · linhas {{ resultado.primeira_linha }}–{{ resultado.ultima_linha }}
+    · {{ resultado.total_linhas }} veículos analisados
+  </div>
+
+  {% if resultado.alertas %}
+  <div class="alertas">
+    {% for alerta in resultado.alertas %}
+    <div class="alerta {{ alerta.nivel }}">
+      <span class="texto">{{ alerta.texto }}</span>
+      <span class="detalhe">{{ alerta.detalhe }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if resultado and takt and setor and takt|float != setor.takt_segundos %}
+  <div class="postos">
+    Takt desta análise: <b>{{ takt }} s</b> — diferente do cadastrado em
+    {{ setor.nome }} ({{ setor.takt_segundos|int }} s).
+    <a href="{{ url_for('tela_setores', editar=setor.id) }}"
+       style="color:#7FD4FF">alterar no setor</a>
+  </div>
+  {% endif %}
+
+  {% if resultado.faltas %}
+  <div class="postos">
+    Absenteísmo: <b>{{ resultado.faltas }}</b> pessoa(s) ·
+    {% if resultado.postos_ativos < resultado.postos_originais %}
+      tarefas redistribuídas em <b>{{ resultado.postos_ativos }}</b> de
+      {{ resultado.postos_originais }} variantes
+    {% else %}
+      distribuição normal, {{ resultado.postos_originais }} variantes
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="colunas">
+    {% for variante in resultado.variantes.values() %}
+    <section class="variante">
+      <header>
+        <div class="nome">{{ variante.nome|upper }}</div>
+        <div class="total {{ variante.total|faixa }}">{{ variante.total_fmt }}</div>
+        <div class="rot">carga total</div>
+      </header>
+
+      <div class="tarefas">
+        {% for tarefa in variante.linhas() %}
+        <div class="tarefa">
+          <div class="topo">
+            <span class="nome">{{ tarefa.nome }}{% if tarefa.origem and tarefa.origem != variante.id %}<span class="origem">{{ tarefa.origem }}</span>{% endif %}</span>
+            {% with id='t_' ~ variante.id ~ '_' ~ loop.index,
+                    rotulo=tarefa.nome, valor=tarefa.contagem,
+                    itens=tarefa.itens, classe='qtd',
+                    tem_seq=resultado.tem_coluna_seq,
+                    itens_texto=tarefa.itens|itens_texto %}
+              {% include '_detalhe.html' %}
+            {% endwith %}
+          </div>
+          <div class="pct {{ tarefa.percentual|faixa }}">{{ tarefa.percentual_fmt }}</div>
+          <div class="barra">
+            <i class="{{ tarefa.percentual|faixa }}"
+               style="width: {{ [tarefa.percentual, 100]|min }}%"></i>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <footer>
+        <div><span>Tarefas</span><span>{{ '%.2f'|format(variante.subtotal) }}%</span></div>
+        {% if variante.absenteismo %}
+        <div><span>Absenteísmo</span><span>{{ variante.absenteismo.percentual_fmt }}</span></div>
+        {% endif %}
+      </footer>
+    </section>
+    {% endfor %}
+  </div>
+
+  <h2>CPM MIX</h2>
+  <div class="mix">
+    {% for chave, valor in resultado.mix.items() %}
+    <div>
+      <div class="rot">{{ resultado.rotulos_mix.get(chave, chave) }}</div>
+      {% with id='mix_' ~ chave, rotulo=resultado.rotulos_mix.get(chave, chave),
+              valor=valor, itens=resultado.itens_mix.get(chave, []),
+              classe='val', tem_seq=resultado.tem_coluna_seq,
+              itens_texto=resultado.itens_mix.get(chave, [])|itens_texto %}
+        {% include '_detalhe.html' %}
+      {% endwith %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if resultado.avisos %}
+  <div class="avisos">{% for aviso in resultado.avisos %}⚠ {{ aviso }}<br>{% endfor %}</div>
+  {% endif %}
+
+  {% with id='res', titulo='EXPORTAR RESULTADO',
+          tsv=export_tsv, texto=export_texto,
+          downloads=([('RELATÓRIO EM PDF',
+                       url_for('relatorio_pdf_rota', **params_pdf))]
+                     if pdf_disponivel and params_pdf else None) %}
+    {% include '_exportar.html' %}
+  {% endwith %}
+  {% if not pdf_disponivel %}
+  <div class="aviso-box" style="margin-top:10px">
+    ⚠ Botão de PDF indisponível: a biblioteca <code>reportlab</code> não está
+    instalada. Rode <code>pip install reportlab</code> e reinicie o
+    <code>app.py</code>.
+  </div>
+  {% endif %}
+
+  {% if presenteismo_momentos %}
+  <div class="painel-presenteismo">
+    <h2 style="margin:0 0 8px">
+      MOMENTOS COM PRESENTEÍSMO ({{ presenteismo_momentos|length }})
+    </h2>
+    <div class="dica-campo" style="max-width:none; margin-bottom:10px">
+      Onde uma montagem complexa caiu num trecho em que alguém estava fora —
+      ordenado pela pior sobrecarga primeiro.
+    </div>
+    <table class="tabela-presenteismo">
+      <tr>
+        <th>Sev.</th><th>Regra</th><th>Posições</th>
+        <th>Fora no trecho</th><th>Postos no trecho</th><th>Sobrecarga</th>
+      </tr>
+      {% for m in presenteismo_momentos %}
+      <tr>
+        <td><span class="pastilha {{ m.severidade|lower }}">{{ m.severidade }}</span></td>
+        <td>{{ m.regra }}</td>
+        <td class="mono">{{ m.a }}–{{ m.b }}</td>
+        <td>{{ m.fora_no_trecho }}</td>
+        <td>{{ m.postos_no_trecho|int }} de {{ m.postos_cheios }}</td>
+        <td>
+          <b style="color: {{ 'var(--critico)' if m.sobrecarga >= 100 else 'var(--atencao)' }}">
+            {{ m.sobrecarga|round|int }}%</b>
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if gargalos_dados %}
+    {% include '_gargalos.html' %}
+  {% endif %}
+{% endif %}
+
+<script>
+  // So um detalhe aberto por vez, senao as caixas se sobrepoem.
+  document.addEventListener("click", function (evento) {
+    var alvo = evento.target.closest("details.det > summary");
+    document.querySelectorAll("details.det[open]").forEach(function (d) {
+      if (!alvo || d !== alvo.parentNode) { d.removeAttribute("open"); }
+    });
+    if (alvo) { setTimeout(function () { ajustarCaixa(alvo.parentNode); }, 0); }
+  });
+
+  // Vira a caixinha para dentro da tela quando ela nasce na borda direita
+  // (ultima coluna) ou muito perto do rodape.
+  function ajustarCaixa(det) {
+    if (!det.hasAttribute("open")) { return; }
+    det.classList.remove("esquerda", "acima");
+    var caixa = det.querySelector(".det-caixa");
+    if (!caixa) { return; }
+
+    var r = caixa.getBoundingClientRect();
+    if (r.right > document.documentElement.clientWidth - 8) {
+      det.classList.add("esquerda");
+    }
+    r = caixa.getBoundingClientRect();
+    if (r.bottom > window.innerHeight - 8 && r.height < det.getBoundingClientRect().top) {
+      det.classList.add("acima");
+    }
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      document.querySelectorAll("details.det[open]").forEach(function (d) {
+        d.removeAttribute("open");
+      });
+    }
+  });
+
+  function copiarDetalhe(botao) {
+    var campo = botao.parentNode.querySelector("textarea");
+    var pronto = function () {
+      botao.textContent = "COPIADO";
+      setTimeout(function () { botao.textContent = "COPIAR"; }, 1200);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(campo.value).then(pronto, function () {
+        selecionarECopiar(campo, pronto);
+      });
+    } else {
+      selecionarECopiar(campo, pronto);
+    }
+  }
+
+
+
+  // Lembra a preferencia de buscar sozinho ao abrir (localStorage do navegador)
+  (function () {
+    var caixa = document.getElementById("auto-buscar");
+    if (!caixa) return;
+
+    var ligado = localStorage.getItem("menumix_auto") === "1";
+    caixa.checked = ligado;
+    caixa.addEventListener("change", function () {
+      localStorage.setItem("menumix_auto", caixa.checked ? "1" : "0");
+    });
+
+    // dispara so quando a pagina abre limpa (sem resultado na tela)
+    var temResultado = document.querySelector(".colunas") !== null;
+    var jaRodou = sessionStorage.getItem("menumix_auto_feito") === "1";
+    if (ligado && !temResultado && !jaRodou) {
+      sessionStorage.setItem("menumix_auto_feito", "1");
+      document.getElementById("acao-outlook").value = "outlook_recentes";
+      document.getElementById("form-outlook").submit();
+    }
+    if (temResultado) sessionStorage.removeItem("menumix_auto_feito");
+  })();
+</script>
+
+</body>
+</html>

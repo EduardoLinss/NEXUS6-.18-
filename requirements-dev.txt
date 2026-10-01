@@ -1,0 +1,7 @@
+-r requirements.txt
+
+# Dependencias so para rodar os testes (pasta tests/) — nao sobem para
+# producao. Instalar com:
+#   pip install -r requirements-dev.txt
+#   pytest
+pytest==8.3.4

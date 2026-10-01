@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642;
+    --cartao: #182160;
+    --cartao-topo: #1E2A75;
+    --linha: #2C3890;
+    --texto: #F2F2F2;
+    --texto-fraco: #A9B0D8;
+    --scania: #C20E17;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 60px 32px;
+    background: var(--fundo); color: var(--texto);
+    font: 14px/1.5 Arial, Helvetica, sans-serif;
+  }
+  .capa { max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 34px; margin: 0; letter-spacing: 2px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); margin: 6px 0 40px; }
+
+  .grade { display: grid; gap: 16px;
+           grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  a.ferramenta {
+    display: block; text-decoration: none; color: inherit;
+    background: var(--cartao); border: 1px solid var(--linha);
+    border-radius: 12px; overflow: hidden;
+    transition: border-color .15s, transform .15s;
+  }
+  a.ferramenta:hover { border-color: var(--scania); transform: translateY(-2px); }
+  a.ferramenta .topo { background: var(--cartao-topo);
+                       border-top: 3px solid var(--scania); padding: 16px 18px; }
+  a.ferramenta .nome { font-size: 16px; font-weight: bold; }
+  a.ferramenta .desc { padding: 14px 18px; color: var(--texto-fraco);
+                       font-size: 13px; }
+  a.ferramenta .abrir { padding: 0 18px 16px; color: var(--scania);
+                        font-size: 12px; letter-spacing: 1px; }
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin: 0 0 20px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+  .rodape { margin-top: 44px; color: var(--texto-fraco); font-size: 12px; }
+
+  .topo { display: flex; align-items: flex-start; gap: 16px; }
+  .topo .titulo { flex: 1 1 auto; }
+  a.ajuda { flex: 0 0 auto; text-decoration: none; color: var(--texto);
+            border: 1px solid var(--scania); border-radius: 8px;
+            padding: 9px 20px; font-size: 13px; font-weight: bold;
+            letter-spacing: 1px; white-space: nowrap;
+            transition: background .15s; }
+  a.ajuda:hover { background: var(--scania); }
+
+  @media (max-width: 700px) {
+    .topo { flex-wrap: wrap; }
+    a.ajuda { order: -1; width: 100%; text-align: center; }
+  }
+
+  @media (max-width: 700px) {
+    body { padding: 28px 16px; }
+    h1 { font-size: 26px; }
+    .sub { margin-bottom: 26px; }
+    .grade { grid-template-columns: 1fr; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<div class="capa">
+  <div class="topo">
+    <div class="titulo">
+      <h1><img class="marca" src="{{ url_for('static', filename='nexus.svg') }}" alt=""><span class="wm">NEXUS<span>-6</span></span></h1>
+      <div class="sub">Ferramentas de análise da linha</div>
+    </div>
+    <a class="ajuda" href="{{ url_for('ajuda') }}">AJUDA</a>
+  </div>
+
+  <div class="barra-setor">
+    <span class="rot">SETOR</span>
+    {% for s in setores %}
+    <a href="{{ url_for('menu', setor=s.id) }}"
+       class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+    {% endfor %}
+    <a href="{{ url_for('tela_setores') }}">gerenciar setores</a>
+  </div>
+
+  <div class="grade">
+    {% for ferramenta in ferramentas %}
+    <a class="ferramenta" href="{{ url_for(ferramenta.rota, setor=setor.id, **(ferramenta.args or {})) }}">
+      <div class="topo"><div class="nome">{{ ferramenta.nome }}</div></div>
+      <div class="desc">{{ ferramenta.descricao }}</div>
+      <div class="abrir">ABRIR →</div>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="rodape">
+    Rodando em <code>localhost</code>? Só esta máquina enxerga.
+    Para liberar aos colegas: <code>python app.py --rede</code>.
+  </div>
+</div>
+
+</body>
+</html>

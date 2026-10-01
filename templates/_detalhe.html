@@ -1,0 +1,40 @@
+{#
+  Numero clicavel que abre a lista de POPID / SEQ dos veiculos contados.
+
+    {% with id='mix_8x4', rotulo='8x4', valor=21, itens=…,
+            classe='val', tem_seq=resultado.tem_coluna_seq %}
+      {% include '_detalhe.html' %}
+    {% endwith %}
+
+  Usa <details>: abre e fecha sem JavaScript, funciona igual no acesso pela
+  rede (onde algumas APIs do navegador ficam bloqueadas em http).
+#}
+{% if itens %}
+<details class="det" id="det_{{ id }}">
+  <summary class="{{ classe }}" title="Clique para ver os POPID">{{ valor }}</summary>
+  <div class="det-caixa">
+    <div class="det-topo">
+      <b>{{ rotulo }}</b>
+      <span>{{ itens|length }} veículo(s)</span>
+    </div>
+    <table class="det-tab">
+      <tr>
+        <th>POPID</th>
+        {% if tem_seq %}<th>SEQ</th>{% else %}<th>Posição</th>{% endif %}
+      </tr>
+      {% for item in itens %}
+      <tr>
+        <td>{{ item.popid }}</td>
+        <td>{{ item.seq if tem_seq else item.posicao }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    <div class="det-copiar">
+      <textarea readonly spellcheck="false">{{ itens_texto }}</textarea>
+      <button type="button" onclick="copiarDetalhe(this)">COPIAR</button>
+    </div>
+  </div>
+</details>
+{% else %}
+<span class="{{ classe }}">{{ valor }}</span>
+{% endif %}

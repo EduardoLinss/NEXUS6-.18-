@@ -1,0 +1,13 @@
+{
+  // Os arquivos em templates/ são Jinja, não HTML puro. Sem isso o VS Code
+  // tenta validar {{ ... }} dentro de style="" como se fosse CSS e acusa
+  // "property value expected" / "at-rule or selector expected".
+  "files.associations": {
+    "**/templates/*.html": "jinja-html"
+  },
+  "html.validate.styles": false,
+  "html.validate.scripts": false,
+  "emmet.includeLanguages": {
+    "jinja-html": "html"
+  }
+}

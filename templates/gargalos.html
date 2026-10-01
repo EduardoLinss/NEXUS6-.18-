@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gargalos da sequência · NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  input[type=text], input[type=number], select {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 150px;
+  }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.leve { background: #1E3A8A; padding: 6px 14px; font-weight: normal;
+                font-size: 13px; }
+  button.leve:hover { background: #1D4ED8; }
+  button.perigo { background: transparent; border: 1px solid var(--critico);
+                  color: var(--critico); padding: 6px 14px; font-weight: normal;
+                  font-size: 13px; }
+  button.perigo:hover { background: var(--critico); color: #fff; }
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .linha { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .erro { background: #4A1220;
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin-bottom: 16px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+ border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+
+  /* ---- painel de gargalos ---- */
+  .gargalos { background: var(--cartao); border: 1px solid var(--linha);
+              border-radius: 10px; padding: 14px 16px; margin-top: 22px; }
+  .garg-topo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+               margin-bottom: 12px; }
+  .garg-topo b { font-size: 12px; letter-spacing: 1px; }
+  .garg-resumo { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .garg-link { margin-left: auto; color: var(--texto-fraco); font-size: 12px; }
+  .garg-fraco { color: var(--texto-fraco); font-size: 12px; }
+  .pastilha { font-size: 11px; border-radius: 10px; padding: 2px 9px;
+              border: 1px solid currentColor; }
+  .pastilha.alta { color: var(--critico); }
+  .pastilha.media { color: var(--atencao); }
+  .pastilha.limpo { color: var(--ok); }
+
+  .faixa { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 14px; }
+  .faixa .bloco { width: 11px; height: 16px; border-radius: 2px;
+                  background: var(--linha); }
+  .faixa .bloco.alta { background: var(--critico); }
+  .faixa .bloco.media { background: var(--atencao); }
+  .faixa .bloco.nenhum { background: #263079; }
+
+  .garg-tab { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .garg-tab th { text-align: left; font-weight: normal; font-size: 10px;
+                 letter-spacing: 1px; color: var(--texto-fraco);
+                 padding-bottom: 6px; }
+  .garg-tab td { padding: 8px 12px 8px 0; border-top: 1px solid var(--linha);
+                 vertical-align: top; }
+  .garg-tab .mono { font-family: Consolas, monospace; font-size: 12px; }
+  .garg-membros span { display: inline-block; margin: 0 8px 3px 0; }
+  .garg-membros i { color: var(--texto-fraco); font-style: normal; }
+
+  @media (max-width: 700px) {
+    body { padding: 16px 14px; -webkit-text-size-adjust: 100%; }
+    input[type=text], input[type=number], select { width: 100%; font-size: 16px; }
+    .linha > div { flex: 1 1 100%; min-width: 0; }
+    .linha > button { width: 100%; }
+    button { min-height: 44px; }
+    .garg-link { margin-left: 0; }
+    .garg-tab, .garg-tab tbody, .garg-tab tr, .garg-tab td { display: block;
+                width: 100%; }
+    .garg-tab th { display: none; }
+    .garg-tab tr { border-top: 1px solid var(--linha); padding: 8px 0; }
+    .garg-tab td { border-top: 0; padding: 3px 0; }
+  }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1>GARGALOS DA <span>SEQUÊNCIA</span></h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  <a href="{{ url_for('analise') }}">análise de MIX</a> ·
+  <a href="{{ url_for('gargalos_regras') }}">construtor de regras</a>
+</div>
+
+<div class="barra-setor">
+  <span class="rot">SETOR</span>
+  {% for s in setores %}
+  <a href="{{ url_for(request.endpoint, setor=s.id) }}"
+     class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+  {% endfor %}
+  <a href="{{ url_for('tela_setores') }}" title="Cadastrar setores">+</a>
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+
+<form method="post" class="painel">
+  <input type="hidden" name="token" value="{{ token }}">
+  <h2>INTERVALO{% if info_dados %} · {{ info_dados }}{% endif %}</h2>
+  <div class="linha">
+    <div>
+      <label>POPID</label>
+      <input type="text" name="popid" value="{{ popid }}" autofocus>
+    </div>
+    <div>
+      <label>Produção do dia</label>
+      <input type="text" name="producao" value="{{ producao }}">
+    </div>
+    <button type="submit">VER GARGALOS</button>
+  </div>
+</form>
+
+{% if resultado %}
+<div class="sub">
+  POPID {{ resultado.popid }} · linhas {{ resultado.primeira_linha }}–{{ resultado.ultima_linha }}
+  · {{ resultado.total_linhas }} veículos
+</div>
+{% endif %}
+
+{% if gargalos_dados %}
+  {% include '_gargalos.html' %}
+  {% if pdf_disponivel and params_pdf %}
+  <p style="margin-top:16px">
+    <a href="{{ url_for('relatorio_pdf_rota', **params_pdf) }}"
+       style="border:1px solid var(--scania); border-radius:6px;
+              padding:9px 16px; text-decoration:none; color:var(--texto);
+              font-weight:bold; font-size:13px">RELATÓRIO EM PDF</a>
+  </p>
+  {% endif %}
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tags da MONA · NEXUS-6</title>
+<style>
+  :root {
+    --fundo: #0F1642; --cartao: #182160; --cartao-topo: #1E2A75;
+    --linha: #2C3890; --texto: #F2F2F2; --texto-fraco: #A9B0D8;
+    --scania: #C20E17; --ok: #4CC76A; --atencao: #F2C14E; --critico: #FF5C61;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; background: var(--fundo);
+         color: var(--texto); font: 14px/1.5 Arial, Helvetica, sans-serif; }
+  a { color: #7FA2FF; }
+  h1 { font-size: 20px; margin: 0 0 4px; letter-spacing: .5px; }
+  h1 span { color: var(--scania); }
+  .sub { color: var(--texto-fraco); font-size: 13px; margin-bottom: 22px; }
+  label { display: block; font-size: 12px; color: var(--texto-fraco);
+          margin-bottom: 5px; }
+  input[type=text], textarea {
+    background: #0C1136; color: var(--texto); border: 1px solid var(--linha);
+    border-radius: 6px; padding: 8px 10px; font-size: 14px; width: 100%;
+    font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  button { background: var(--scania); color: #fff; border: 0; border-radius: 6px;
+           padding: 10px 22px; font-weight: bold; font-size: 14px; cursor: pointer; }
+  button:hover { background: #E00014; }
+  button.perigo { background: transparent; border: 1px solid var(--critico);
+                  color: var(--critico); padding: 6px 14px; font-weight: normal;
+                  font-size: 13px; }
+  button.perigo:hover { background: var(--critico); color: #fff; }
+  button.leve { background: #1E3A8A; padding: 6px 14px; font-weight: normal;
+                font-size: 13px; }
+  button.leve:hover { background: #1D4ED8; }
+  .painel { background: var(--cartao); border: 1px solid var(--linha);
+            border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+  .painel h2 { font-size: 12px; letter-spacing: 1px; margin: 0 0 14px;
+               color: var(--texto-fraco); font-weight: normal; }
+  .erro { background: #4A1220; border: 1px solid var(--critico); color: #FFD3D5;
+          padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  .ok-msg { background: #123A22; border: 1px solid var(--ok); color: #CFF3D9;
+            padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--linha);
+          font-size: 13px; vertical-align: top; }
+  th { color: var(--texto-fraco); font-weight: normal; font-size: 11px;
+      letter-spacing: .5px; text-transform: uppercase; }
+  code { background: #0C1136; border-radius: 4px; padding: 1px 6px; font-size: 12px; }
+  .campo { color: var(--atencao); }
+  .linha-form { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+  .linha-form > div { flex: 1 1 220px; }
+  .barra-setor { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+                 margin-bottom: 16px; font-size: 12px; }
+  .barra-setor .rot { color: var(--texto-fraco); letter-spacing: 1px; }
+  .barra-setor a { text-decoration: none; color: var(--texto-fraco);
+                   border: 1px solid var(--linha); border-radius: 14px;
+                   padding: 4px 14px; }
+  .barra-setor a:hover { border-color: var(--texto-fraco); color: var(--texto); }
+  .barra-setor a.ativo { background: var(--scania); border-color: var(--scania);
+                         color: #fff; font-weight: bold; }
+</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='tema.css') }}">
+<script src="{{ url_for('static', filename='profundidade.js') }}" defer></script>
+</head>
+<body>
+
+<h1>TAGS DA <span>MONA</span></h1>
+<div class="sub">
+  <a href="{{ url_for('menu') }}">← menu</a> ·
+  <a href="{{ url_for('filtro_mix') }}">Filtro MIX</a> ·
+  <a href="{{ url_for('analise') }}">Análise de MIX</a> ·
+  <a href="{{ url_for('ajuda') }}#mona">ajuda</a>
+</div>
+
+<div class="barra-setor">
+  <span class="rot">SETOR</span>
+  {% for s in setores %}
+  <a href="{{ url_for(request.endpoint, setor=s.id) }}"
+     class="{{ 'ativo' if s.id == setor.id }}" title="{{ s.descricao }}">{{ s.nome }}</a>
+  {% endfor %}
+  <a href="{{ url_for('tela_setores') }}" title="Cadastrar setores">+</a>
+</div>
+
+{% if erro %}<div class="erro">{{ erro }}</div>{% endif %}
+{% if mensagem %}<div class="ok-msg">{{ mensagem }}</div>{% endif %}
+
+<div class="painel">
+  <h2>VARIANTES ESPECIAIS RECONHECIDAS AUTOMATICAMENTE — {{ setor.nome }}</h2>
+  <p style="color:var(--texto-fraco); font-size:13px; margin-top:-6px">
+    Lista própria deste setor. Ao cruzar com uma planilha da MONA (Filtro
+    MIX ou Análise), essas são as únicas colunas do formato técnico (POPID +
+    POS_) que entram no cruzamento — o resto é ignorado, porque já existe no
+    mix geral da fábrica. Elas também contam sozinhas no CPM MIX, sem
+    precisar escolher nada na tela.
+  </p>
+
+  {% if tags %}
+  <table>
+    <tr><th>Texto</th><th>Reconhece na MONA quando o nome do item bate com</th><th></th></tr>
+    {% for tag in tags %}
+    <tr>
+      <td><b class="campo">{{ tag.texto }}</b></td>
+      <td>
+        {% for padrao in tag.padroes %}
+          <code>{{ padrao }}</code>{% if not loop.last %}<br>{% endif %}
+        {% else %}
+          <span style="color:var(--texto-fraco)">(nenhum padrão — nunca bate)</span>
+        {% endfor %}
+      </td>
+      <td>
+        <form method="post" onsubmit="return confirm('Remover a tag {{ tag.texto }}?')">
+          <input type="hidden" name="acao" value="remover">
+          <input type="hidden" name="texto" value="{{ tag.texto }}">
+          <button type="submit" class="perigo">Remover</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <p style="color:var(--texto-fraco)">Nenhuma tag cadastrada.</p>
+  {% endif %}
+</div>
+
+<div class="painel">
+  <h2>ADICIONAR TAG NOVA</h2>
+  <form method="post">
+    <input type="hidden" name="acao" value="adicionar">
+    <div class="linha-form">
+      <div>
+        <label>Texto (o que entra em OPCIONAIS/Variantes e no CPM MIX)</label>
+        <input type="text" name="texto" placeholder="ex.: 649|650" required>
+      </div>
+      <div style="flex: 1 1 320px">
+        <label>Padrões que reconhecem o item na MONA (um por linha, regex — opcional)</label>
+        <textarea name="padroes" placeholder="ex.: 649\D*650&#10;(deixe em branco para reconhecer só pelo texto exato acima)"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <button type="submit">Adicionar</button>
+    </div>
+  </form>
+</div>
+
+<div class="painel">
+  <h2>RESTAURAR</h2>
+  <p style="color:var(--texto-fraco); font-size:13px; margin-top:-6px">
+    Volta a lista da {{ setor.nome }} para o padrão de fábrica desse setor.
+    A lista atual fica salva como backup antes de restaurar.
+  </p>
+  <form method="post" onsubmit="return confirm('Restaurar a lista padrão? A lista atual vira um backup.')">
+    <input type="hidden" name="acao" value="restaurar">
+    <button type="submit" class="leve">Restaurar padrão</button>
+  </form>
+</div>
+
+</body>
+</html>

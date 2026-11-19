@@ -635,6 +635,8 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
         cor_destaque_roxo = PatternFill(start_color="7030A0", end_color="7030A0", fill_type="solid")
         cor_destaque_ciano = PatternFill(start_color="00FFFF", end_color="00FFFF", fill_type="solid")
         cor_destaque_rosa = PatternFill(start_color="FF46A2", end_color="FF46A2", fill_type="solid")
+        cor_destaque_turquesa = PatternFill(start_color="153D64", end_color="153D64", fill_type="solid")
+        cor_destaque_dourado = PatternFill(start_color="153D64", end_color="153D64", fill_type="solid")
 
         
         fonte_vermelha = Font(color="FF0000", bold=True)
@@ -688,7 +690,7 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                     elif "8X2" in cell_value_str:
                         cell.fill = cor_destaque
                     elif "10X4" in cell_value_str:
-                        cell.fill = cor_destaque_vermelho
+                        cell.fill = cor_destaque_preto
                     elif "4X2" in cell_value_str:
                         cell.fill = cor_destaque_Verde_Escuro
                     elif "4X4" in cell_value_str:
@@ -696,7 +698,7 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                     elif "6X6" in cell_value_str:
                         cell.fill = cor_destaque_vermelho
                     elif "GT01" in cell_value_str:
-                        cell.fill = cor_destaque_laranja
+                        cell.fill = cor_destaque_dourado
                     elif "SDAR" in cell_value_str:
                         cell.fill = cor_destaque
         
@@ -715,7 +717,7 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                     # Preenchimento cinza com o numero em vermelho. O size vem
                     # da celula para nao perder o tamanho definido em `Fontes`.
                     cell_valores.fill = cor_destaque_cinza
-                    cell_valores.font = Font(color="FF0000", bold=True,
+                    cell_valores.font = Font(color= "FFFFFF", bold=True,
                                              size=cell_valores.font.size)
                     
                     cell_modelo = sheet.cell(row=row_idx, column=col_idx_modelo)
@@ -745,7 +747,7 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                 valor_opcionais = str(cell_opcionais.value or "").upper()
                 if "MOLA 649|650" in valor_opcionais:
                     cell_opcionais.fill = cor_destaque_ciano
-                    cell_opcionais.font = Font( bold=True,
+                    cell_opcionais.font = Font(color= "FFFFFF", bold=True,
                                                size=cell_opcionais.font.size)
 
         if coluna_opcionais in df.columns:
@@ -755,7 +757,17 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                 valor_opcionais = str(cell_opcionais.value or "").upper()
                 if "MOLA 658|660" in valor_opcionais:
                     cell_opcionais.fill = cor_destaque_rosa
-                    cell_opcionais.font = Font( bold=True,
+                    cell_opcionais.font = Font(color= "FFFFFF", bold=True,
+                                               size=cell_opcionais.font.size)
+
+        if coluna_opcionais in df.columns:
+            col_idx_opcionais = df.columns.get_loc(coluna_opcionais) + 1
+            for row_idx in range(2, sheet.max_row + 1):
+                cell_opcionais = sheet.cell(row=row_idx, column=col_idx_opcionais)
+                valor_opcionais = str(cell_opcionais.value or "").upper()
+                if "RHD" in valor_opcionais:
+                    cell_opcionais.fill = cor_destaque_turquesa
+                    cell_opcionais.font = Font(color="FFFFFF", bold=True,
                                                size=cell_opcionais.font.size)
 
         # Fonte branca para "4X4" na coluna MODELO — e onde esse valor
@@ -771,6 +783,33 @@ def formatar_excel_mix_logic(caminho_arquivo_original, caminho_arquivo_novo,
                 if "4X4" in valor_modelo_4x4:
                     cell_modelo_4x4.font = Font(color="FFFFFF", bold=True,
                                                 size=cell_modelo_4x4.font.size)
+
+        coluna_modelo_10x4= "MODELO"
+        if coluna_modelo_10x4 in df.columns:
+            col_idx_modelo_4x4 = df.columns.get_loc(coluna_modelo_4x4) + 1
+            for row_idx in range(2, sheet.max_row + 1):
+                cell_modelo_4x4 = sheet.cell(row=row_idx, column=col_idx_modelo_4x4)
+                valor_modelo_4x4 = str(cell_modelo_4x4.value or "").upper()
+                if "10x4" in valor_modelo_4x4:
+                    cell_modelo_4x4.font = Font(color="FFFFFF", bold=True,
+                                                size=cell_modelo_4x4.font.size)
+
+        linhas_inteiras_por_opcional = (
+            ("MOLA 658|660", cor_destaque_rosa),
+        )
+        if coluna_opcionais in df.columns:
+            col_idx_opcionais = df.columns.get_loc(coluna_opcionais) + 1
+            for row_idx in range(2, sheet.max_row + 1):
+                valor_opcionais = str(
+                    sheet.cell(row=row_idx, column=col_idx_opcionais).value or "").upper()
+                for texto, cor in linhas_inteiras_por_opcional:
+                    if texto.upper() in valor_opcionais:
+                        for col_idx in range(1, sheet.max_column + 1):
+                            cell = sheet.cell(row=row_idx, column=col_idx)
+                            cell.fill = cor
+                            cell.font = Font(color="FFFFFF", bold=True,
+                                             size=cell.font.size)
+                        break
 
         # TVL: pinta a linha inteira, sobrescrevendo qualquer outra cor que
         # já tenha caído nela (é a prioridade máxima — se é TVL, é isso que

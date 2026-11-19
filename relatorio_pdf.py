@@ -449,6 +449,69 @@ def _cabecalho(historia, estilos, resultado):
         historia.append(Spacer(1, 8))
 
 
+def _presenteismo(historia, estilos, presenteismo):
+    """Os presenteismos que o usuario registrou: quem saiu, quando e por quanto."""
+    pessoas = presenteismo["pessoas"]
+    historia.append(Paragraph(
+        f"Presenteísmos registrados ({len(pessoas)})", estilos["secao"]))
+
+    pico, fixas = presenteismo["pico"], presenteismo["faltas_fixas"]
+    texto = f"Pior instante do turno: <b>{pico}</b> pessoa(s) fora ao mesmo tempo"
+    if fixas:
+        texto += f" + {fixas} de absenteísmo fixo = <b>{pico + fixas}</b>"
+    historia.append(Paragraph(
+        texto + " — é esse número que decide a redistribuição das tarefas.",
+        estilos["corpo"]))
+    historia.append(Spacer(1, 6))
+
+    linhas = [["Pessoa", "Saída", "Retorno", "Duração", "Posições da sequência"]]
+    for p in pessoas:
+        posicoes = (f"{p['pos_a']}–{p['pos_b']} ({p['veiculos']} veículos)"
+                    if p["pos_a"] else "fora do turno")
+        linhas.append([str(p["numero"]), p["inicio"], p["fim"],
+                       f"{p['minutos']} min", posicoes])
+
+    tabela = Table(linhas, colWidths=[22 * mm, 26 * mm, 26 * mm, 28 * mm, 70 * mm],
+                   repeatRows=1)
+    tabela.setStyle(_estilo_tabela())
+    historia.append(tabela)
+    historia.append(Spacer(1, 10))
+
+
+def _momentos_presenteismo(historia, estilos, momentos):
+    """Gargalos que cairam num trecho em que alguem estava fora."""
+    historia.append(Paragraph(
+        f"Momentos com presenteísmo ({len(momentos)})", estilos["secao"]))
+    historia.append(Paragraph(
+        "Onde uma montagem complexa caiu num trecho em que alguém estava fora — "
+        "ordenado pela pior sobrecarga primeiro.", estilos["pequeno"]))
+    historia.append(Spacer(1, 4))
+
+    linhas = [["Sev.", "Regra", "Posições", "Fora no trecho",
+               "Postos no trecho", "Sobrecarga"]]
+    estilo = _estilo_tabela()
+    for i, m in enumerate(momentos, 1):
+        linhas.append([
+            m["severidade"],
+            Paragraph(m["regra"], estilos["corpo"]),
+            f"{m['a']}–{m['b']}",
+            str(m["fora_no_trecho"]),
+            f"{int(m['postos_no_trecho'])} de {m['postos_cheios']}",
+            f"{round(m['sobrecarga'])}%",
+        ])
+        cor = VERMELHO if m["severidade"] == "ALTA" else AMBAR
+        estilo.add("TEXTCOLOR", (0, i), (0, i), colors.HexColor(cor))
+        estilo.add("FONTNAME", (0, i), (0, i), "Helvetica-Bold")
+        cor_sobrecarga = VERMELHO if m["sobrecarga"] >= 100 else AMBAR
+        estilo.add("TEXTCOLOR", (5, i), (5, i), colors.HexColor(cor_sobrecarga))
+        estilo.add("FONTNAME", (5, i), (5, i), "Helvetica-Bold")
+
+    tabela = Table(linhas, colWidths=[16 * mm, 80 * mm, 24 * mm, 32 * mm,
+                                      36 * mm, 28 * mm], repeatRows=1)
+    tabela.setStyle(estilo)
+    historia.append(tabela)
+
+
 def _resumo_variantes(historia, estilos, resultado):
     historia.append(Paragraph("Carga por variante", estilos["secao"]))
 
@@ -607,8 +670,15 @@ def _rodape(canvas, documento):
 # ---------------------------------------------------------------------------
 def gerar(resultado, gargalos_dados=None, membros_de=None,
           inicio_turno=INICIO_TURNO_PADRAO,
-          fim_turno=FIM_TURNO_PADRAO, pausas=None) -> bytes:
-    """Devolve o PDF em bytes, pronto para enviar como download."""
+          fim_turno=FIM_TURNO_PADRAO, pausas=None,
+          presenteismo=None, presenteismo_momentos=None) -> bytes:
+    """
+    Devolve o PDF em bytes, pronto para enviar como download.
+
+    presenteismo          : resumo das janelas registradas (ver
+                            app._resumo_presenteismo); None = nenhuma.
+    presenteismo_momentos : gargalos que cairam num trecho com gente fora.
+    """
     if not DISPONIVEL:
         raise RuntimeError(
             "reportlab não está instalado. Rode: pip install reportlab"
@@ -625,6 +695,8 @@ def gerar(resultado, gargalos_dados=None, membros_de=None,
     historia: list = []
 
     _cabecalho(historia, estilos, resultado)
+    if presenteismo and presenteismo.get("pessoas"):
+        _presenteismo(historia, estilos, presenteismo)
     _resumo_variantes(historia, estilos, resultado)
     _tarefas_por_variante(historia, estilos, resultado)
 
@@ -634,6 +706,10 @@ def gerar(resultado, gargalos_dados=None, membros_de=None,
     if gargalos_dados and membros_de:
         _gargalos(historia, estilos, gargalos_dados, membros_de,
                   resultado, inicio_turno, fim_turno, pausas)
+
+    if presenteismo_momentos:
+        historia.append(Spacer(1, 12))
+        _momentos_presenteismo(historia, estilos, presenteismo_momentos)
 
     documento.build(historia, onFirstPage=_rodape, onLaterPages=_rodape)
     return buffer.getvalue()

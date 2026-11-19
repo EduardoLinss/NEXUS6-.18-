@@ -39,6 +39,7 @@ para um deploy não sobrescrever o que os usuários criaram.
 | `regras.json` | volume | sim, pelo construtor de regras |
 | `filtro_mix.json` | volume | sim, pelas configurações |
 | `sessoes/` | volume | cache das planilhas (pode sumir sem problema) |
+| `processados.json` | volume | sim — índice dos arquivos gerados no Filtro MIX, mantém o link de download válido após reinício |
 | `regras_fabrica.json` | código | não — é a fonte do "restaurar padrão" |
 
 ## Um worker, de propósito

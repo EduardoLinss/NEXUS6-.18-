@@ -57,6 +57,35 @@
         "2": 2
       },
       "gargalos_varios": 2
+    },
+    {
+      "id": "1-1",
+      "nome": "FA1.1",
+      "descricao": "",
+      "takt_segundos": 300.0,
+      "inicio_turno": "07:05",
+      "fim_turno": "16:05",
+      "pausas": [
+        [
+          "09:00",
+          "09:04"
+        ],
+        [
+          "10:55",
+          "11:55"
+        ],
+        [
+          "14:00",
+          "14:10"
+        ]
+      ],
+      "postos": 2,
+      "postos_por_faltas": {
+        "0": null,
+        "1": null,
+        "2": 2
+      },
+      "gargalos_varios": 2
     }
   ]
 }

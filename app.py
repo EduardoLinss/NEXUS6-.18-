@@ -8,7 +8,7 @@ Tkinter).
 Como rodar:
     pip install flask pandas openpyxl
     python app.py
-    -> abre http://127.0.0.1:5000
+    -> abre http://127.0.0.1:5090  (outra porta: python app.py --porta 8080)
 
 Rodando na propria maquina Windows, o restante do app (Outlook via win32com)
 continua funcionando normalmente e pode alimentar esta mesma tela.
@@ -17,6 +17,7 @@ continua funcionando normalmente e pode alimentar esta mesma tela.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import pickle
@@ -71,6 +72,18 @@ app.config["MAX_CONTENT_LENGTH"] = 25 * 1024 * 1024
 
 PASTA_SESSAO = armazenamento.pasta_sessao()
 
+
+@app.route("/saude")
+def saude():
+    """
+    Health check do Render: so confirma que o processo esta de pe, sem tocar
+    em planilha/sessao nenhuma. Sem essa rota o Render bate em /saude, leva
+    404 pra sempre e cancela o deploy — a versao nova nunca entra no ar e o
+    servidor fica preso na antiga.
+    """
+    return "ok", 200
+
+
 DIAS_PADRAO = 7
 MAX_PLANILHAS = 3
 
@@ -123,7 +136,7 @@ FERRAMENTAS = [
     {
         "rota": "filtro_mix",
         "nome": "Filtro MIX",
-        "descricao": "FA2, FA1.2, Fibras e Função 4 — formata o MIX a partir "
+        "descricao": "FA2, FA1.2, 1.1, Fibras e Função 4 — formata o MIX a partir "
                      "do Outlook ou de um arquivo enviado.",
     },
     {
@@ -479,6 +492,91 @@ def _presenteismo_por_posicao(janelas: list[dict], relogios: list[float],
             for relogio in relogios]
 
 
+def _janelas_de_texto(texto: str) -> list[dict]:
+    """
+    Volta do texto "08:00-08:30,10:00-10:20" (como vai na URL do PDF) para a
+    mesma lista de janelas que o formulario da tela produz.
+    """
+    janelas = []
+    for trecho in (texto or "").split(","):
+        inicio, _, fim = trecho.partition("-")
+        inicio, fim = inicio.strip(), fim.strip()
+        if inicio and fim:
+            janelas.append({"inicio": inicio, "fim": fim})
+    return janelas[:30]
+
+
+def _janelas_para_texto(janelas: list[dict]) -> str:
+    return ",".join(f"{j['inicio']}-{j['fim']}" for j in janelas)
+
+
+def _resumo_presenteismo(janelas: list[dict], relogios: list[float],
+                         inicio_turno: str, fim_turno: str,
+                         presentes_fora: list[int], faltas_fixas: int) -> dict:
+    """
+    O que o usuario registrou, pronto para mostrar: uma linha por pessoa com
+    saida, retorno, duracao e as posicoes da sequencia que passam enquanto ela
+    esta fora — mais o pior instante (quantas pessoas fora ao mesmo tempo).
+    """
+    pessoas = []
+    for numero, janela in enumerate(janelas, 1):
+        recorte = cpm_core._pausas_em_segundos(
+            inicio_turno, fim_turno, [(janela["inicio"], janela["fim"])])
+        if recorte:
+            p1, p2 = recorte[0]
+            posicoes = [i + 1 for i, r in enumerate(relogios) if p1 <= r <= p2]
+            minutos = (p2 - p1) // 60
+        else:
+            posicoes, minutos = [], 0  # janela inteira fora do turno
+        pessoas.append({
+            "numero": numero,
+            "inicio": janela["inicio"], "fim": janela["fim"],
+            "minutos": minutos,
+            "pos_a": posicoes[0] if posicoes else None,
+            "pos_b": posicoes[-1] if posicoes else None,
+            "veiculos": len(posicoes),
+        })
+    return {
+        "pessoas": pessoas,
+        "pico": max(presentes_fora) if presentes_fora else 0,
+        "faltas_fixas": faltas_fixas,
+    }
+
+
+def _calcular_presenteismo(resultado, dados, setor, faltas: int,
+                           janelas: list[dict], inicio_turno: str,
+                           fim_turno: str):
+    """
+    Tudo do presenteismo num lugar so, usado pela tela e pelo PDF — para os
+    dois mostrarem exatamente os mesmos numeros.
+
+    Devolve (faltas_para_alerta, resumo, momentos). Sem janelas, devolve o
+    absenteismo fixo, resumo None e nenhum momento.
+    """
+    if not janelas:
+        return faltas, None, []
+
+    total_postos = len(resultado.variantes)
+    pausas = setor.pausas_tuplas or None
+    ritmo = cpm_core.ritmo_do_turno(
+        len(resultado.demanda), inicio_turno, fim_turno, pausas)
+    relogios = [
+        cpm_core.relogio_apos(i * ritmo, inicio_turno, fim_turno, pausas)
+        for i in range(len(resultado.demanda))
+    ]
+    presentes_fora = _presenteismo_por_posicao(
+        janelas, relogios, inicio_turno, fim_turno)
+    faltas_serie = [faltas + fora for fora in presentes_fora]
+
+    momentos = _momentos_de_presenteismo(
+        resultado, dados, faltas_serie, total_postos, setor.tabela_postos)
+    resumo = _resumo_presenteismo(
+        janelas, relogios, inicio_turno, fim_turno, presentes_fora, faltas)
+
+    # O pior instante do turno e o que decide se falta recurso.
+    return (max(faltas_serie) if faltas_serie else faltas), resumo, momentos
+
+
 def _momentos_de_presenteismo(resultado, dados_gargalos, faltas_serie,
                               total_postos, tabela_postos) -> list[dict]:
     """
@@ -575,29 +673,11 @@ def executar_analise(df, contexto: dict, setor=None, contador_mona: str | None =
     # continua com o posto completo. E o que faz o calculo de gargalo
     # enxergar o momento exato em que a montagem complexa bateu com menos
     # gente, em vez de aplicar a falta o dia inteiro.
-    faltas_para_alerta = faltas
-    if contexto.get("presenteismo_janelas"):
-        total_postos = len(resultado.variantes)
-        pausas = setor.pausas_tuplas or None
-        ritmo = cpm_core.ritmo_do_turno(
-            len(resultado.demanda), contexto["inicio_turno"],
-            contexto["fim_turno"], pausas)
-        relogios = [
-            cpm_core.relogio_apos(i * ritmo, contexto["inicio_turno"],
-                                  contexto["fim_turno"], pausas)
-            for i in range(len(resultado.demanda))
-        ]
-        presentes_fora = _presenteismo_por_posicao(
-            contexto["presenteismo_janelas"], relogios,
-            contexto["inicio_turno"], contexto["fim_turno"])
-        faltas_serie = [faltas + fora for fora in presentes_fora]
-
-        contexto["presenteismo_momentos"] = _momentos_de_presenteismo(
-            resultado, dados, faltas_serie, total_postos, setor.tabela_postos)
-
-        # O pior instante do turno e o que decide se falta recurso — mesma
-        # logica usada no painel da fabrica para o horario de falta.
-        faltas_para_alerta = max(faltas_serie) if faltas_serie else faltas
+    (faltas_para_alerta, contexto["presenteismo_resumo"],
+     contexto["presenteismo_momentos"]) = _calcular_presenteismo(
+        resultado, dados, setor, faltas,
+        contexto.get("presenteismo_janelas") or [],
+        contexto["inicio_turno"], contexto["fim_turno"])
 
     aplicar_absenteismo(resultado, faltas_para_alerta, n_gargalos,
                         setor.tabela_postos, setor.gargalos_varios)
@@ -616,6 +696,10 @@ def executar_analise(df, contexto: dict, setor=None, contador_mona: str | None =
         "fim_turno": contexto["fim_turno"],
         "setor": setor.id,
     }
+    if contexto.get("presenteismo_janelas"):
+        # O PDF refaz a analise a partir da URL, entao as janelas vao junto.
+        contexto["params_pdf"]["presenteismo"] = _janelas_para_texto(
+            contexto["presenteismo_janelas"])
     return contexto
 
 
@@ -704,7 +788,66 @@ def tela_setores():
 # ---------------------------------------------------------------------------
 # Processadores: uma tela para todas as funcoes de planilha
 # ---------------------------------------------------------------------------
-_processados: dict[str, str] = {}
+# Indice "nome do arquivo gerado -> caminho no disco" dos arquivos do Filtro
+# MIX. Antes era um dict em memoria: a cada reinicio/deploy (o Railway reinicia
+# sozinho) o indice sumia e o link de download levava de volta ao menu, mesmo
+# com o arquivo ainda no disco. Agora fica em `processados.json` na pasta de
+# dados (volume, em deploy). O caminho precisa ser guardado — nao da para
+# deduzir do nome — porque a pasta de saida e configuravel e pode mudar entre
+# um processamento e outro.
+ARQUIVO_PROCESSADOS = armazenamento.caminho_dados("processados.json")
+MAX_PROCESSADOS = 500
+_trava_processados = threading.Lock()
+
+
+def _ler_processados() -> dict[str, str]:
+    try:
+        with open(ARQUIVO_PROCESSADOS, encoding="utf-8") as entrada:
+            dados = json.load(entrada)
+    except (OSError, ValueError):
+        return {}
+    if not isinstance(dados, dict):
+        return {}
+    return {str(k): str(v) for k, v in dados.items() if isinstance(v, str)}
+
+
+def _gravar_processados(indice: dict[str, str]) -> None:
+    temporario = ARQUIVO_PROCESSADOS + ".tmp"
+    with open(temporario, "w", encoding="utf-8") as saida:
+        json.dump(indice, saida, ensure_ascii=False, indent=1)
+    os.replace(temporario, ARQUIVO_PROCESSADOS)
+
+
+def registrar_processado(nome: str, caminho: str) -> None:
+    """Guarda o arquivo gerado no indice persistente.
+
+    Aproveita a gravacao para tirar do indice o que ja nao existe no disco e
+    manter so os MAX_PROCESSADOS mais recentes — o arquivo nao cresce sem fim.
+    """
+    with _trava_processados:
+        indice = {k: v for k, v in _ler_processados().items()
+                  if os.path.isfile(v)}
+        indice.pop(nome, None)
+        indice[nome] = os.path.abspath(caminho)  # o mais novo vai pro fim
+        if len(indice) > MAX_PROCESSADOS:
+            indice = dict(list(indice.items())[-MAX_PROCESSADOS:])
+        try:
+            _gravar_processados(indice)
+        except OSError as erro:
+            logger.warning("processados: nao foi possivel gravar o indice (%s)", erro)
+
+
+def caminho_processado(nome: str) -> str | None:
+    """Caminho do arquivo gerado, ou None se nao estiver no indice/disco.
+
+    So devolve caminhos registrados pelo proprio app: o nome da URL nunca vira
+    caminho diretamente, entao `../` nao serve para ler outro arquivo.
+    """
+    with _trava_processados:
+        caminho = _ler_processados().get(nome)
+    if caminho and os.path.isfile(caminho):
+        return caminho
+    return None
 
 
 def _valor_do_form(campo, formulario) -> object:
@@ -736,8 +879,8 @@ def _valor_do_form(campo, formulario) -> object:
 
 @app.route("/processados/<nome>")
 def baixar_processado(nome):
-    caminho = _processados.get(nome)
-    if not caminho or not os.path.isfile(caminho):
+    caminho = caminho_processado(nome)
+    if not caminho:
         return redirect(url_for("menu"))
     return send_file(caminho, as_attachment=True, download_name=nome)
 
@@ -891,8 +1034,7 @@ def painel():
         if len(caminhos) >= 2:
             caminhos, avisos = ordenar_por_data(caminhos)
             try:
-                df = concatenar_planilhas_em_memoria(caminhos[0], caminhos[1],
-                                                     verbose=False)
+                df = concatenar_planilhas(caminhos, verbose=False)
             except Exception as erro:  # noqa: BLE001
                 contexto["erro"] = f"Não foi possível juntar as planilhas: {erro}"
                 df = None
@@ -1079,6 +1221,7 @@ def analise():
         "presenteismo_ativo": False,
         "presenteismo_qtd": "",
         "presenteismo_janelas": [],
+        "presenteismo_resumo": None,
         "presenteismo_momentos": [],
         "takt": f"{setor.takt_segundos:g}",
         "inicio_turno": setor.inicio_turno,
@@ -1187,7 +1330,7 @@ def analise():
         caminhos, avisos_ordem = ordenar_por_data(caminhos)
         contexto["avisos_planilha"] = list(avisos_ordem)
         try:
-            df = concatenar_planilhas_em_memoria(caminhos[0], caminhos[1], verbose=False)
+            df = concatenar_planilhas(caminhos, verbose=False)
         except Exception as erro:  # noqa: BLE001
             contexto["erro"] = f"Não foi possível juntar as planilhas: {erro}"
             return render_template("index.html", **contexto)
@@ -1471,7 +1614,7 @@ def filtro_mix():
             except ValueError as erro:
                 contexto["erro"] = str(erro)
                 return responder()
-            if valor is None:
+            if valor is None and not campo.opcional:
                 contexto["erro"] = f"Informe: {campo.rotulo}."
                 return responder()
             valores.append(valor)
@@ -1538,7 +1681,7 @@ def _executar(processador, caminhos, valores, contexto, pasta=None,
     if ok:
         contexto["mensagem"] = mensagem
         contexto["arquivo_gerado"] = nome_saida
-        _processados[nome_saida] = saida
+        registrar_processado(nome_saida, saida)
         if processador.usa_lista_colunas:
             contexto["relatorio_colunas"] = filtro_mix_mod.relatorio_colunas()
     else:
@@ -1618,14 +1761,26 @@ def relatorio_pdf_rota():
         logger.warning("pdf: gargalos fora do relatório (%s)", erro)
         dados, membros, n_gargalos = None, None, 0
 
-    aplicar_absenteismo(resultado, faltas, n_gargalos,
+    inicio_turno = request.args.get("inicio_turno") or setor.inicio_turno
+    fim_turno = request.args.get("fim_turno") or setor.fim_turno
+
+    # Mesmo calculo da tela: o PDF mostra os presenteismos que o usuario
+    # registrou e o absenteismo no pior instante, igual ao que ele viu.
+    faltas_para_alerta, presenteismo_resumo, presenteismo_momentos = \
+        _calcular_presenteismo(
+            resultado, dados, setor, faltas,
+            _janelas_de_texto(request.args.get("presenteismo", "")),
+            inicio_turno, fim_turno)
+
+    aplicar_absenteismo(resultado, faltas_para_alerta, n_gargalos,
                         setor.tabela_postos, setor.gargalos_varios)
 
     conteudo = pdf_mod.gerar(
         resultado, dados, membros,
-        inicio_turno=request.args.get("inicio_turno") or setor.inicio_turno,
-        fim_turno=request.args.get("fim_turno") or setor.fim_turno,
-        pausas=setor.pausas_tuplas or None)
+        inicio_turno=inicio_turno, fim_turno=fim_turno,
+        pausas=setor.pausas_tuplas or None,
+        presenteismo=presenteismo_resumo,
+        presenteismo_momentos=presenteismo_momentos)
     return Response(conteudo, mimetype="application/pdf", headers={
         "Content-Disposition":
             f'attachment; filename="{pdf_mod.nome_arquivo(resultado)}"'})
@@ -2008,7 +2163,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="NEXUS-6 web")
     parser.add_argument("--rede", action="store_true",
                         help="aceita acesso de outras maquinas da rede local")
-    parser.add_argument("--porta", type=int, default=5082)
+    parser.add_argument("--porta", type=int, default=5090)
     parser.add_argument("--debug", action="store_true",
                         help="NAO use com --rede: o debugger do Flask permite "
                              "executar codigo remotamente")

@@ -10,7 +10,7 @@ camada de apresentação mudou.
 pip install flask pandas openpyxl
 python app.py
 ```
-Abre em http://127.0.0.1:5000
+Abre em http://127.0.0.1:5090. Para outra porta: `python app.py --porta 8080`.
 
 ## Estrutura
 
@@ -53,7 +53,7 @@ são upload manual ou Microsoft Graph API.
 Na tela: **BAIXAR RECENTES** (últimos N dias) ou **BAIXAR POR PERÍODO** (datas).
 Se POPID e produção já estiverem preenchidos, ele baixa, concatena e analisa
 numa tacada só. O checkbox "buscar ao abrir a página" fica salvo no navegador
-(`localStorage`) e dispara a busca sozinho quando você abre o `localhost:5000`.
+(`localStorage`) e dispara a busca sozinho quando você abre o `localhost:5090`.
 
 Detalhe importante do Flask: cada requisição roda numa thread nova, e COM exige
 `CoInitialize` por thread. O `sessao_com()` cuida disso — por isso o download
@@ -107,7 +107,7 @@ só em um arquivo vira vazio nos outros em vez de ser descartado em silêncio.
 python app.py --rede
 ```
 
-Ele mostra o endereço a passar adiante (`http://192.168.x.x:5000`). Sem
+Ele mostra o endereço a passar adiante (`http://192.168.x.x:5090`). Sem
 `--rede`, só a sua máquina enxerga.
 
 **No celular, `localhost` não funciona.** `localhost` significa "este
@@ -459,6 +459,7 @@ e o resto da tela se adapta ao que ela declara em `processadores.py`:
 |---|---|---|---|
 | FA2 | MIX | — | sim |
 | FA1.2 | MIX | — | não |
+| 1.1 | MIX principal + MONA (obrigatória) | texto para MONA em lista simples (opcional) | sim |
 | Fibras | MIX geral | — | não |
 | Função 4 | MIX + MONA (+ 2º MIX opcional) | TAKT, bloco, produção, POPID de corte, início do turno | não |
 

@@ -120,7 +120,7 @@ COLUNAS_REGRA = COLUNAS_REGRA_FA2
 def colunas_regra_do_setor(setor: str | None = None) -> list[str]:
     """Lista de colunas sugeridas no seletor do construtor de regras, por setor."""
     setor_id = setor or SETOR_PADRAO
-    if setor_id == "1-2":
+    if setor_id in ("1-2", "1-1"):  # mesmo cabecalho de MIX
         return COLUNAS_REGRA_1_2
     return COLUNAS_REGRA_FA2
 
@@ -154,13 +154,23 @@ def unidades_de_dataframe(df: pd.DataFrame) -> list[dict]:
     Mesmo mapeamento de `analisador_cpm.carrega`, so que partindo de um
     DataFrame ja em memoria — assim os gargalos saem exatamente do mesmo
     intervalo de POPID/produção que a carga por variante.
+
+    O TVL (veiculo de teste) fica de fora da lista — nao conta como gargalo
+    nem entra no total de veiculos. Mas ele ja ocupou uma posicao/horario
+    real na linha, entao cada unidade que sobra guarda em "_pos_real" o
+    indice dela dentro do `df` recebido (contando os TVL que ficaram pelo
+    caminho), pra `analisar()` corrigir o "pos" depois — sem isso, o motor
+    renumera tudo em sequencia (0,1,2...) e a barra de gargalos "adianta"
+    o relogio, pulando o tempo que o TVL ja gastou na linha.
     """
     ja_formatado = "SEQ." in df.columns and "BARRA TRASEIRA" in df.columns
 
     unidades = []
-    for _, linha in df.iterrows():
+    for indice_fisico, (_, linha) in enumerate(df.iterrows()):
         modelo = _coluna(linha, "MODELO")
         if not modelo:
+            continue
+        if "TVL" in _coluna(linha, "ENTRADA LINHA REAL").upper():
             continue
 
         opcionais = _coluna(linha, "OPCIONAIS")
@@ -187,6 +197,7 @@ def unidades_de_dataframe(df: pd.DataFrame) -> list[dict]:
             "COMPRIM": _coluna(linha, "COMPRIM"),
             "MU": _coluna(linha, "MU"),
             "CHASSI": _coluna(linha, "CHASSI"),
+            "_pos_real": indice_fisico,
         }
 
         # Qualquer outra coluna da planilha original (SORDER, ENTRADA LINHA
@@ -212,7 +223,20 @@ def analisar(df: pd.DataFrame, setor: str | None = None) -> dict:
         return {"meta": {"n_unidades": 0, "n_gargalos": 0},
                 "regras": [], "unidades": [], "gargalos": [], "resumo": {}}
 
+    # `pos_fisica[i]` = posicao real (contando os TVL) da unidade que o
+    # motor vai chamar de "pos" i — guardado ANTES de chamar o motor, porque
+    # ele renumera tudo em sequencia (0,1,2...) sem saber dos TVL que
+    # ficaram fora da lista.
+    pos_fisica = [u["_pos_real"] for u in unidades]
+
     dados = motor.analisar_unidades(unidades, carregar_config(setor))
+
+    mapa_pos = dict(enumerate(pos_fisica))
+    for unidade in dados.get("unidades", []):
+        unidade["pos"] = mapa_pos.get(unidade["pos"], unidade["pos"])
+    for gargalo in dados.get("gargalos", []):
+        gargalo["membros"] = [mapa_pos.get(p, p) for p in gargalo.get("membros", [])]
+
     dados["resumo"] = _resumir(dados)
     return dados
 

@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from filtro_mix import COLUNAS_DESEJADAS_PADRAO, formatar_excel_mix_logic
+from mix_processor_1_1 import COLUNAS_PADRAO as COLUNAS_FA11
+from mix_processor_1_1 import formatar_excel_mix_logic_funcao_um_um
 from mix_processor_1_2 import COLUNAS_PADRAO as COLUNAS_FA12
 from mix_processor_1_2 import formatar_excel_mix_logic_funcao_um_dois
 from mix_processor_4 import COLUNAS_PADRAO as COLUNAS_F4
@@ -50,6 +52,8 @@ class CampoValor:
     # Quando preenchido, o campo so e exigido se este arquivo tiver sido
     # enviado. E o caso dos parametros de CPM da Funcao 4.
     exigido_com: str = ""
+    # Campo que pode ficar em branco: a funcao recebe None.
+    opcional: bool = False
 
 
 @dataclass(frozen=True)
@@ -104,6 +108,34 @@ CATALOGO: dict[str, Processador] = {
         arquivos=(CampoArquivo("arquivo", "Planilha MIX"),),
         colunas_padrao=tuple(COLUNAS_FA12),
         aceita_mona=True,
+    ),
+    "fa11": Processador(
+        id="fa11",
+        titulo="1.1",
+        descricao="Monta o MIX da 1.1: MIX principal + MONA, cruzados por "
+                  "POPID. Colunas: SEQ, VARIANTES, POPID, MODELO, MU, RETARDER.",
+        funcao=formatar_excel_mix_logic_funcao_um_um,
+        prefixo_saida="FA11_Processado",
+        arquivos=(
+            CampoArquivo("arquivo_mix", "Planilha MIX principal"),
+            CampoArquivo("arquivo_mona", "Planilha MONA",
+                         filtra_colunas=False,
+                         ajuda="Formato da Função 4 (cabeçalho técnico na "
+                               "linha 1, itens na linha 2) ou só uma lista "
+                               "de POPIDs."),
+        ),
+        valores=(
+            CampoValor("texto_mona", "Texto para POPIDs encontrados",
+                       placeholder="ex.: 650/649", opcional=True,
+                       ajuda="Só é usado quando a MONA é uma lista simples "
+                             "de POPIDs (sem as colunas POS_)."),
+        ),
+        colunas_padrao=tuple(COLUNAS_FA11),
+        observacao="VARIANTES junta WTA (em OPCIONAIS), RHD, LNG, AUX CAB "
+                   "COOLER, DUPLO CIRCUITO e COOLING COIL do MIX principal; "
+                   "depois de \" | \" vem o que a MONA registra para o POPID. "
+                   "VARIANTES preenchida fica preta; MODELO 8X2/8X4 pinta a "
+                   "linha inteira.",
     ),
     "fibras": Processador(
         id="fibras",

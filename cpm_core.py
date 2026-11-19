@@ -129,6 +129,23 @@ class Contem(Criterio):
 
 
 @dataclass(frozen=True)
+class Preenchido(Criterio):
+    """Coluna com qualquer valor (ex.: RHD, COOLING COIL — o MIX so escreve
+    algo na celula quando o veiculo tem o item)."""
+
+    coluna: str
+
+    def mascara(self, ctx: "ContextoDados") -> pd.Series:
+        serie = ctx.texto(self.coluna)
+        if serie is None:
+            return ctx.falso()
+        return serie != ""
+
+    def colunas(self) -> tuple[str, ...]:
+        return (self.coluna,)
+
+
+@dataclass(frozen=True)
 class MaiorQue(Criterio):
     """Coluna numerica acima de um limite (ex.: COMPRIM > 7400)."""
 
@@ -345,6 +362,7 @@ CATALOGO_MIX_FA2: tuple[ContadorMix, ...] = (
     ContadorMix("6x2", "6x2", Contem("MODELO", "6X2")),
     ContadorMix("4x4", "4x4", Contem("MODELO", "4X4")),
     ContadorMix("4x2", "4x2", Contem("MODELO", "4X2")),
+    ContadorMix("6x2/2", "6x2/2", Contem("MODELO", "6X2/2")),
     ContadorMix("BARRA_TRASEIRA", "Barra traseira", Contem("BARRA TRASEIRA", "COM")),
     ContadorMix("ABAFADOR", "Abafador", Contem("OPCIONAIS", "ABAFADOR")),
     ContadorMix("HD_FRONT", "HD Front", Contem("OPCIONAIS", "HD FRONT")),
@@ -354,7 +372,7 @@ CATALOGO_MIX_FA2: tuple[ContadorMix, ...] = (
     ContadorMix("LTDA", "LTDA", Contem("OPCIONAIS", "LTDA")),
     ContadorMix("FUP", "Viga FUP", Contem("OPCIONAIS", "FUP")),
     ContadorMix("RB", "RB885", Contem("RPX", "RB885")),
-    ContadorMix("RBX", "RB756", Contem("RPX", "RB756")),
+    ContadorMix("RBX", "RBX", Contem("RPX", "RB756")),
     ContadorMix("GUATEMALA", "GUATEMALA", Contem("MU", "GT01")),
     ContadorMix("6x2_DISCO", "6x2 disco",
                 E(Contem("MODELO", "6X2"), Contem("OPCIONAIS", "DISCO"))),
@@ -389,12 +407,37 @@ CATALOGO_MIX_1_2: tuple[ContadorMix, ...] = (
 )
 
 
+# Itens contados no CPM MIX da FA1.1. Mesma estrutura das outras funcoes
+# (modelos e "Veiculo longo"); os itens proprios sao os mesmos que o Filtro MIX
+# da 1.1 junta em VARIANTES (mix_processor_1_1.FONTES_VARIANTES).
+CATALOGO_MIX_1_1: tuple[ContadorMix, ...] = (
+    ContadorMix("10x4", "10x4", Contem("MODELO", "10X4")),
+    ContadorMix("8x4", "8x4", Contem("MODELO", "8X4")),
+    ContadorMix("8x2", "8x2", Contem("MODELO", "8X2")),
+    ContadorMix("6x6", "6x6", Contem("MODELO", "6X6")),
+    ContadorMix("6x4", "6x4", Contem("MODELO", "6X4")),
+    ContadorMix("6x2", "6x2", Contem("MODELO", "6X2")),
+    ContadorMix("4x4", "4x4", Contem("MODELO", "4X4")),
+    ContadorMix("4x2", "4x2", Contem("MODELO", "4X2")),
+    ContadorMix("WTA", "WTA", Contem("OPCIONAIS", "WTA")),
+    ContadorMix("RHD", "RHD", Preenchido("RHD")),
+    ContadorMix("LNG", "LNG", Preenchido("LNG")),
+    ContadorMix("AUX_CAB_COOLER", "Aux cab cooler", Preenchido("AUX CAB COOLER")),
+    ContadorMix("DUPLO_CIRCUITO", "Duplo circuito", Preenchido("DUPLO CIRCUITO")),
+    ContadorMix("COOLING_COIL", "Cooling coil", Preenchido("COOLING COIL")),
+    ContadorMix("VEICULO_LONGO", "Veiculo longo",
+                MaiorQue("COMPRIM", COMPRIMENTO_VEICULO_LONGO)),
+)
+
+
 def catalogo_mix_do_setor(setor: str | None = None) -> tuple[ContadorMix, ...]:
     """Itens contados no CPM MIX, por setor — mesmo padrão de
     `gargalos.colunas_regra_do_setor()`."""
     setor_id = setor or SETOR_PADRAO
     if setor_id == "1-2":
         return CATALOGO_MIX_1_2
+    if setor_id == "1-1":
+        return CATALOGO_MIX_1_1
     return CATALOGO_MIX_FA2
 
 
@@ -442,6 +485,8 @@ TAGS_MONA_PADRAO: tuple[TagMona, ...] = (
     TagMona("MOLA 658|660", (r"658\D*660",)),
     TagMona("MOLA 649|650", (r"649\D*650",)),
     TagMona("CILINDRO ELEVADO", (r"CILINDRO\s*ELEV",)),
+    TagMona("RHD", (r"RHD",)),
+    TagMona("SEM ACESSO 5ª RODA", (r"5ª RODA",)),
 )
 
 # Tags da MONA da FA1.2 — mesmo mecanismo, lista propria. "texto" e o rotulo
@@ -460,12 +505,19 @@ TAGS_MONA_PADRAO_1_2: tuple[TagMona, ...] = (
 )
 
 
+# Tags da MONA da FA1.1: comeca vazia — o CPM MIX da 1.1 conta so os itens do
+# MIX da 1.1 (CATALOGO_MIX_1_1). Tags novas entram pela tela /tags-mona.
+TAGS_MONA_PADRAO_1_1: tuple[TagMona, ...] = ()
+
+
 def tags_mona_padrao_do_setor(setor: str | None = None) -> tuple[TagMona, ...]:
     """Lista embutida de tags da MONA, por setor (ponto de partida sem
     tags_mona.json — ver tags_mona_ativas())."""
     setor_id = setor or SETOR_PADRAO
     if setor_id == "1-2":
         return TAGS_MONA_PADRAO_1_2
+    if setor_id == "1-1":
+        return TAGS_MONA_PADRAO_1_1
     return TAGS_MONA_PADRAO
 
 
@@ -821,19 +873,53 @@ def analisar_mix(
 
     avisos: list[str] = []
     popid_str, inicio = _localizar_popid(df, popid)
-    fim = min(inicio + producao, len(df))
-    recorte = df.iloc[inicio:fim].copy()
 
-    linhas_analisadas = len(recorte)
+    # O TVL (veiculo de teste) nao conta na producao, mas continua ocupando
+    # uma posicao/horario real na linha — por isso ele NAO e removido do df
+    # antes daqui (ver carregar_excel_sem_linhas_ocultas). Em vez de cortar
+    # exatamente `producao` LINHAS a partir do inicio, andamos ate juntar
+    # `producao` veiculos REAIS (sem TVL); cada TVL no caminho so empurra o
+    # fim do recorte um pouco mais pra frente, puxando o proximo carro real
+    # pra dentro da contagem.
+    coluna_tvl = "ENTRADA LINHA REAL"
+    if coluna_tvl in df.columns:
+        eh_tvl_total = df[coluna_tvl].astype(str).str.upper().str.contains("TVL", na=False)
+    else:
+        eh_tvl_total = pd.Series(False, index=df.index)
+
+    reais_desde_inicio = (~eh_tvl_total.iloc[inicio:]).cumsum()
+    posicoes_completas = reais_desde_inicio[reais_desde_inicio == producao]
+    fim = (posicoes_completas.index[0] + 1) if not posicoes_completas.empty else len(df)
+
+    recorte = df.iloc[inicio:fim].copy()
+    eh_tvl = eh_tvl_total.iloc[inicio:fim].tolist()
+    n_tvl = sum(eh_tvl)
+
+    linhas_analisadas = len(recorte) - n_tvl
     if linhas_analisadas < producao:
         avisos.append(
             f"Intervalo truncado: {linhas_analisadas} linhas disponiveis de "
             f"{producao} solicitadas."
         )
+    if n_tvl:
+        avisos.append(
+            f"{n_tvl} veiculo(s) TVL no intervalo: nao contam na producao, "
+            f"mas continuam ocupando a posicao/horario na linha."
+        )
 
     base = producao if base_percentual == "informada" else linhas_analisadas
 
     ctx = ContextoDados(recorte)
+
+    def _sem_tvl(itens):
+        """Remove da contagem os itens que cairam numa linha de TVL."""
+        saida = []
+        for item in itens:
+            indice = item["posicao"] - 1
+            if 0 <= indice < len(eh_tvl) and eh_tvl[indice]:
+                continue
+            saida.append(item)
+        return saida
 
     tags_ativas = tags_mona_ativas(setor)
     catalogo_mix = catalogo_mix_do_setor(setor) + tuple(
@@ -843,24 +929,26 @@ def analisar_mix(
     if contador_mona and contador_mona not in textos_fixos:
         catalogo_mix = catalogo_mix + (_contador_texto_opcionais(contador_mona),)
 
-    itens_mix = {c.chave: ctx.identificar(c.criterio) for c in catalogo_mix}
+    itens_mix = {c.chave: _sem_tvl(ctx.identificar(c.criterio)) for c in catalogo_mix}
     mix = {chave: len(itens) for chave, itens in itens_mix.items()}
     rotulos = {c.chave: c.rotulo for c in catalogo_mix}
 
     faltas = absenteismo or {}
     # Tempo exigido por veículo: quanto de trabalho cada carro traz ao passar
     # pelo setor. E o que desenha a curva de demanda da linha do tempo.
-    tempo_por_posicao = [0.0] * linhas_analisadas
+    # Tem o tamanho fisico do recorte (incluindo os TVL) para a posicao de
+    # cada veiculo continuar batendo com o horario real da linha.
+    tempo_por_posicao = [0.0] * len(recorte)
 
     variantes: dict[str, ResultadoVariante] = {}
     for variante in catalogo:
         calculadas = []
         for tarefa in variante.tarefas:
-            itens = ctx.identificar(tarefa.criterio)
+            itens = _sem_tvl(ctx.identificar(tarefa.criterio))
             contagem = len(itens)
             for item in itens:
                 indice = item["posicao"] - 1
-                if 0 <= indice < linhas_analisadas:
+                if 0 <= indice < len(recorte):
                     tempo_por_posicao[indice] += tarefa.tempo
             calculadas.append(ResultadoTarefa(
                 nome=tarefa.nome,
@@ -1005,11 +1093,19 @@ def carregar_excel_sem_linhas_ocultas(
     linhas_ignorar: Iterable[int] | None = None,
     ignorar_ocultas: bool = True,
     coluna_filtro: str = "ENTRADA LINHA REAL",
-    valores_excluidos: Sequence[str] = ("TVL",),
+    valores_excluidos: Sequence[str] = (),
 ):
     """
     Le a planilha ignorando linhas ocultas e linhas cuja coluna `coluna_filtro`
     contenha algum dos `valores_excluidos`.
+
+    Por padrao `valores_excluidos` vem vazio: os veiculos de TVL (teste) NAO
+    sao descartados aqui. Eles continuam ocupando a posicao/linha do tempo
+    deles na planilha — se fossem removidos nesta etapa, o `analisar_mix`
+    (abaixo) perderia a nocao de quanto tempo de linha eles ja consumiram, e
+    o horario estimado da barra de gargalos andaria mais rapido do que a
+    linha real. Quem precisa ignorar o TVL na CONTAGEM (producao/MIX/CPM)
+    faz isso depois, em `analisar_mix`, sem descartar a linha.
 
     Correcoes em relacao a versao anterior:
       * data_only=True  -> celulas com formula devolvem o valor, nao "=A1*2"

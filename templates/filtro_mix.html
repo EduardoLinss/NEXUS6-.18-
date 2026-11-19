@@ -291,13 +291,17 @@
     <div class="campos-arquivo" style="margin-top:14px">
       {% for campo in processador.valores %}
       <div>
-        <label>{{ campo.rotulo }}</label>
+        <label>
+          {{ campo.rotulo }}
+          {% if campo.opcional %}<span class="opcional">(opcional)</span>{% endif %}
+        </label>
         <input type="{{ campo.tipo }}" name="{{ campo.nome }}"
                value="{{ enviados.get(campo.nome) or campo.padrao }}"
                {% if campo.placeholder %}placeholder="{{ campo.placeholder }}"{% endif %}
                {% if campo.passo %}step="{{ campo.passo }}"{% endif %}
                {% if campo.minimo %}min="{{ campo.minimo }}"{% endif %}
                style="width:100%">
+        {% if campo.ajuda %}<div class="info" style="margin-top:4px">{{ campo.ajuda }}</div>{% endif %}
       </div>
       {% endfor %}
     </div>

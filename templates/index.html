@@ -660,6 +660,41 @@
   </div>
   {% endif %}
 
+  {% if presenteismo_resumo %}
+  <div class="painel-presenteismo">
+    <h2 style="margin:0 0 8px">
+      PRESENTEÍSMOS REGISTRADOS ({{ presenteismo_resumo.pessoas|length }})
+    </h2>
+    <div class="dica-campo" style="max-width:none; margin-bottom:10px">
+      Pior instante do turno:
+      <b>{{ presenteismo_resumo.pico }}</b> pessoa(s) fora ao mesmo tempo
+      {% if presenteismo_resumo.faltas_fixas %}
+        + {{ presenteismo_resumo.faltas_fixas }} de absenteísmo fixo
+        = <b>{{ presenteismo_resumo.pico + presenteismo_resumo.faltas_fixas }}</b>
+      {% endif %}
+      — é esse número que decide a redistribuição das tarefas.
+    </div>
+    <table class="tabela-presenteismo">
+      <tr>
+        <th>Pessoa</th><th>Saída</th><th>Retorno</th><th>Duração</th>
+        <th>Posições da sequência</th>
+      </tr>
+      {% for p in presenteismo_resumo.pessoas %}
+      <tr>
+        <td>{{ p.numero }}</td>
+        <td class="mono">{{ p.inicio }}</td>
+        <td class="mono">{{ p.fim }}</td>
+        <td>{{ p.minutos }} min</td>
+        <td class="mono">
+          {% if p.pos_a %}{{ p.pos_a }}–{{ p.pos_b }} ({{ p.veiculos }} veículos)
+          {% else %}fora do turno{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
   <div class="colunas">
     {% for variante in resultado.variantes.values() %}
     <section class="variante">
